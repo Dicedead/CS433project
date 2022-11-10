@@ -1,0 +1,12 @@
+End of Run Action: Dimensions 1 1 1 voxel volume 24000000
+ opened file guava.out for dose output 0 phantomSD
+TOTAL 2000
+Finished : End of Run Action 0
+End of Run Action: Dimensions 1 1 1 voxel volume 24000000
+ opened file guava.out for dose output 0 phantomSD
+TOTAL 2000
+Finished : End of Run Action 0
+WARNING - Attempt to delete the physical volume store while geometry closed !
+WARNING - Attempt to delete the logical volume store while geometry closed !
+WARNING - Attempt to delete the solid store while geometry closed !
+WARNING - Attempt to delete the region store while geometry closed !
