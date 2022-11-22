@@ -1,0 +1,5 @@
+- Any science reference (book, website, course, etc)
+- What do the features represent (in particular: difference step length and track length + what are the features
+"next volume" and "procname")
+- #SpawnInStep=  1 most often, = 2 in TEN cases => Is this one of the important rare events we should be concerned about?
+- What are we predicting / what will be input to the system
