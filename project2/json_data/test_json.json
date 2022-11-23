@@ -1,0 +1,167 @@
+{
+    "base_filename": "test_data.dat",
+    "tracks": [
+        {
+            "track_number": 0,
+            "track_id": 1,
+            "parent_id": 0,
+            "particle": "gamma",
+            "number_of_steps": 7,
+            "lines": [
+                {
+                    "step_index": 0,
+                    "x": 0.0,
+                    "y": 100.0,
+                    "z": 100.0,
+                    "dx": 0.1,
+                    "dy": 0.0,
+                    "dz": 0.0,
+                    "kin": 0.0,
+                    "de": 0.0,
+                    "step_length": 0.0,
+                    "next_volume": "phantom",
+                    "proc_name": "initStep",
+                    "line_type": "step"
+                },
+                {
+                    "step_index": 1,
+                    "x": 206.0,
+                    "y": 100.0,
+                    "z": 100.0,
+                    "dx": 0.903,
+                    "dy": -0.43,
+                    "dz": 0.00251,
+                    "kin": 0.0989,
+                    "de": 0.000543,
+                    "step_length": 206.0,
+                    "next_volume": "phantom",
+                    "proc_name": "compt",
+                    "line_type": "step",
+                    "spawn_in_step": 1
+                },
+                {
+                    "step_number": 1,
+                    "x": 206.0,
+                    "y": 100.0,
+                    "z": 100.0,
+                    "dx": 0.121,
+                    "emitted_particle": "0.973",
+                    "line_type": "emission"
+                },
+                {
+                    "step_index": 2,
+                    "x": 403.0,
+                    "y": 6.23,
+                    "z": 101.0,
+                    "dx": 0.939,
+                    "dy": -0.048,
+                    "dz": 0.34,
+                    "kin": 0.0979,
+                    "de": 0.000543,
+                    "step_length": 218.0,
+                    "next_volume": "phantom",
+                    "proc_name": "compt",
+                    "line_type": "step",
+                    "spawn_in_step": 1
+                },
+                {
+                    "step_number": 2,
+                    "x": 403.0,
+                    "y": 6.23,
+                    "z": 101.0,
+                    "dx": 0.165,
+                    "emitted_particle": "-0.978",
+                    "line_type": "emission"
+                },
+                {
+                    "step_index": 3,
+                    "x": 497.0,
+                    "y": 1.4,
+                    "z": 135.0,
+                    "dx": 0.65,
+                    "dy": -0.421,
+                    "dz": 0.632,
+                    "kin": 0.0953,
+                    "de": 4.16e-05,
+                    "step_length": 100.0,
+                    "next_volume": "phantom",
+                    "proc_name": "compt",
+                    "line_type": "step",
+                    "spawn_in_step": 1
+                },
+                {
+                    "step_number": 3,
+                    "x": 497.0,
+                    "y": 1.4,
+                    "z": 135.0,
+                    "dx": 0.563,
+                    "emitted_particle": "0.701",
+                    "line_type": "emission"
+                },
+                {
+                    "step_index": 4,
+                    "x": 499.0,
+                    "y": -4.21e-10,
+                    "z": 137.0,
+                    "dx": 0.65,
+                    "dy": -0.421,
+                    "dz": 0.632,
+                    "kin": 0.0953,
+                    "de": 0.0,
+                    "step_length": 3.32,
+                    "next_volume": "World",
+                    "proc_name": "Transportation",
+                    "line_type": "step"
+                },
+                {
+                    "step_index": 5,
+                    "x": 6520.0,
+                    "y": -3900.0,
+                    "z": 5990.0,
+                    "dx": -0.415,
+                    "dy": -0.56,
+                    "dz": 0.718,
+                    "kin": 0.0861,
+                    "de": 2.85e-05,
+                    "step_length": 9260.0,
+                    "next_volume": "World",
+                    "proc_name": "compt",
+                    "line_type": "step",
+                    "spawn_in_step": 1
+                },
+                {
+                    "step_number": 5,
+                    "x": 6520.0,
+                    "y": -3900.0,
+                    "z": 5990.0,
+                    "dx": 0.995,
+                    "emitted_particle": "0.0904",
+                    "line_type": "emission"
+                },
+                {
+                    "step_index": 6,
+                    "x": 4200.0,
+                    "y": -7030.0,
+                    "z": 10000.0,
+                    "dx": -0.415,
+                    "dy": -0.56,
+                    "dz": 0.718,
+                    "kin": 0.0861,
+                    "de": 0.0,
+                    "step_length": 5590.0,
+                    "next_volume": "OutOfWorld",
+                    "proc_name": "Transportation",
+                    "line_type": "step"
+                }
+            ]
+        },
+        {
+            "track_number": 1,
+            "track_id": 1,
+            "parent_id": 0,
+            "particle": "gamma",
+            "number_of_steps": 2,
+            "lines": []
+        }
+    ]
+}

@@ -1,0 +1,23 @@
+* G4Track Information:   Particle = gamma,   Track ID = 1,   Parent ID = 0
+Step#    X(mm)    Y(mm)    Z(mm)       DX       DY       DZ KinE(MeV)  dE(MeV) StepLeng TrackLeng  NextVolume ProcName
+    0        0      100      100       0.1        0        0         0     phantom initStep
+    1      206      100      100    0.903    -0.43  0.00251    0.0989 0.000543      206       206     phantom compt
+    :----- List of 2ndaries - #SpawnInStep=  1(Rest= 0,Along= 0,Post= 1), #SpawnTotal=  1 ---------------
+    :       206       100       100     0.121     0.973     0.195  0.000553                 e-
+    :----------------------------------------------------------------- EndOf2ndaries Info ---------------
+    2      403     6.23      101    0.939   -0.048     0.34    0.0979 0.000543      218       424     phantom compt
+    :----- List of 2ndaries - #SpawnInStep=  1(Rest= 0,Along= 0,Post= 1), #SpawnTotal=  2 ---------------
+    :       403      6.23       101     0.165    -0.978    -0.129  0.000446                 e-
+    :----------------------------------------------------------------- EndOf2ndaries Info ---------------
+    3      497      1.4      135     0.65   -0.421    0.632    0.0953 4.16e-05      100       525     phantom compt
+    :----- List of 2ndaries - #SpawnInStep=  1(Rest= 0,Along= 0,Post= 1), #SpawnTotal=  3 ---------------
+    :       497       1.4       135     0.563     0.701    -0.437   0.00254                 e-
+    :----------------------------------------------------------------- EndOf2ndaries Info ---------------
+    4      499 -4.21e-10      137     0.65   -0.421    0.632    0.0953        0     3.32       528       World Transportation
+    5 6.52e+03 -3.9e+03 5.99e+03   -0.415    -0.56    0.718    0.0861 2.85e-05 9.26e+03  9.78e+03       World compt
+    :----- List of 2ndaries - #SpawnInStep=  1(Rest= 0,Along= 0,Post= 1), #SpawnTotal=  4 ---------------
+    :  6.52e+03  -3.9e+03  5.99e+03     0.995    0.0904   -0.0409   0.00919                 e-
+    :----------------------------------------------------------------- EndOf2ndaries Info ---------------
+    6  4.2e+03 -7.03e+03    1e+04   -0.415    -0.56    0.718    0.0861        0 5.59e+03  1.54e+04  OutOfWorld Transportation
+
+* G4Track Information:   Particle = gamma,   Track ID = 1,   Parent ID = 0 >> 2 <<

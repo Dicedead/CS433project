@@ -34,6 +34,9 @@ def txt_to_json(
         else:
             track["lines"] = []
 
+        if len(split_line) > 15:
+            track["number_of_steps"] = int(split_line[15])
+
         return track
 
     def new_step(split_line: list[str], index: int) -> dict:
@@ -126,4 +129,4 @@ def txt_to_json(
 
 
 if __name__ == "__main__":
-    txt_to_json("new.dat", "data1.json")
+    txt_to_json("E_0.1.dat", "E_0.1.json")
