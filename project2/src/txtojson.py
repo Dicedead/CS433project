@@ -1,5 +1,6 @@
 # file to JSON
 import json
+import numpy as np
 
 
 def txt_to_json(
@@ -7,7 +8,11 @@ def txt_to_json(
         output_filename: str,
         separated_steps_emissions=False,
         input_folder="../data/",
-        output_folder="../json_data/"
+        output_folder="../json_data/",
+        max_tracks=np.inf,
+        skip_first_n_lines=0,
+        next_track_index=0,
+        verbose=False
 ):
     """
     Transforms input txt file to a json file
@@ -17,6 +22,12 @@ def txt_to_json(
     :param separated_steps_emissions: boolean : whether to separate steps and emissions or not in json file
     :param input_folder: where to find input file
     :param output_folder: where to put output file
+    :param max_tracks: max number of tracks to read in this run
+    :param skip_first_n_lines: number of lines to skip at the beginning of file
+    :param next_track_index: use if reading from a file previously read from
+    :param verbose: progress information, boolean
+
+    :returns number of lines read, last track index
     """
 
     def new_track(split_line: list[str], index: int) -> dict:
@@ -78,13 +89,32 @@ def txt_to_json(
     json_tracks = []
     json_bigobj = {"base_filename": input_filename, "tracks": json_tracks}
 
-    track_index = -1
+    track_index = next_track_index-1
     step_index = -1
+    line_count = float(skip_first_n_lines)
+
+    writing_mode = "w" if skip_first_n_lines == 0 else "a"
+
+    if verbose:
+        with open(input_folder + input_filename) as txt_file:
+            total_lines = len(txt_file.readlines())
+            print(f"File has {total_lines} lines.")
 
     with open(input_folder + input_filename) as txt_file:
 
+        for _ in range(skip_first_n_lines):
+            next(txt_file)
+
         for raw_line in txt_file:
 
+            if verbose and line_count % (total_lines//100) == 0:
+                print(f"Read {(100 * line_count)/total_lines}% of the file.")
+
+            if track_index - next_track_index > max_tracks:
+                line_count -= 1
+                break
+
+            line_count += 1.
             description = list(raw_line.replace(',', ' ').strip().split(None))
             if len(description) > 0:
                 if description[1] == 'G4Track':
@@ -124,9 +154,17 @@ def txt_to_json(
                         else:
                             curr_track_lines[-1]["spawn_in_step"] = spawn_in_step
 
-    with open(output_folder + output_filename, "w") as json_file:
+    if verbose:
+        print(f"Read {(100 * line_count)/total_lines}% of the file with {int(line_count - skip_first_n_lines)} lines in "
+              f"this run and {track_index - next_track_index - 1} tracks in this run, now writing.")
+    with open(output_folder + output_filename, writing_mode) as json_file:
         json.dump(json_bigobj, json_file, indent=4)
+    if verbose:
+        print(f"Done! {int(line_count)} lines read and {track_index} tracks read in total.")
+
+    return line_count, track_index
 
 
 if __name__ == "__main__":
-    txt_to_json("E_0.1.dat", "E_0.1.json")
+    common_string = "E_0.1"
+    txt_to_json(common_string + ".dat", common_string + ".json", verbose=True)
