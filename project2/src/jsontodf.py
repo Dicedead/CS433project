@@ -2,7 +2,7 @@ import pandas as pd
 import json
 
 
-def json_to_df(
+def jsontodf_collisions(
         input_json_filename: str,
         input_json_folder="../json_data/"
 ) -> pd.DataFrame:
@@ -10,9 +10,9 @@ def json_to_df(
     with open(input_json_folder + input_json_filename, 'r') as f:
         data = json.loads(f.read())
 
-    df = data
+    print(data['tracks'][0])
     return None
 
 
 if __name__ == "__main__":
-    json_to_df("data1.json")
+    jsontodf_collisions("test_json.json")

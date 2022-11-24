@@ -45,7 +45,10 @@
                     "y": 100.0,
                     "z": 100.0,
                     "dx": 0.121,
-                    "emitted_particle": "0.973",
+                    "dy": 0.973,
+                    "dz": 0.195,
+                    "de": 0.000553,
+                    "emitted_particle": "e-",
                     "line_type": "emission"
                 },
                 {
@@ -70,7 +73,10 @@
                     "y": 6.23,
                     "z": 101.0,
                     "dx": 0.165,
-                    "emitted_particle": "-0.978",
+                    "dy": -0.978,
+                    "dz": -0.129,
+                    "de": 0.000446,
+                    "emitted_particle": "e-",
                     "line_type": "emission"
                 },
                 {
@@ -95,7 +101,10 @@
                     "y": 1.4,
                     "z": 135.0,
                     "dx": 0.563,
-                    "emitted_particle": "0.701",
+                    "dy": 0.701,
+                    "dz": -0.437,
+                    "de": 0.00254,
+                    "emitted_particle": "e-",
                     "line_type": "emission"
                 },
                 {
@@ -135,7 +144,10 @@
                     "y": -3900.0,
                     "z": 5990.0,
                     "dx": 0.995,
-                    "emitted_particle": "0.0904",
+                    "dy": 0.0904,
+                    "dz": -0.0409,
+                    "de": 0.00919,
+                    "emitted_particle": "e-",
                     "line_type": "emission"
                 },
                 {

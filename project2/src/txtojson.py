@@ -78,7 +78,10 @@ def txt_to_json(
             "y": float(split_line[2]),
             "z": float(split_line[3]),
             "dx": float(split_line[4]),
-            "emitted_particle": split_line[5]
+            "dy": float(split_line[5]),
+            "dz": float(split_line[6]),
+            "de": float(split_line[7]),
+            "emitted_particle": split_line[8]
         }
 
         if not separated_steps_emissions:
@@ -107,7 +110,7 @@ def txt_to_json(
 
         for raw_line in txt_file:
 
-            if verbose and line_count % (total_lines//100) == 0:
+            if verbose and line_count % max((total_lines//100), 1) == 0:
                 print(f"Read {(100 * line_count)/total_lines}% of the file.")
 
             if track_index - next_track_index > max_tracks:
@@ -156,15 +159,15 @@ def txt_to_json(
 
     if verbose:
         print(f"Read {(100 * line_count)/total_lines}% of the file with {int(line_count - skip_first_n_lines)} lines in "
-              f"this run and {track_index - next_track_index - 1} tracks in this run, now writing.")
+              f"this run and {track_index - next_track_index + 1} tracks in this run, now writing.")
     with open(output_folder + output_filename, writing_mode) as json_file:
         json.dump(json_bigobj, json_file, indent=4)
     if verbose:
-        print(f"Done! {int(line_count)} lines read and {track_index} tracks read in total.")
+        print(f"Done! {int(line_count)} lines read and up to track index {track_index} in total.")
 
     return line_count, track_index
 
 
 if __name__ == "__main__":
     common_string = "E_0.1"
-    txt_to_json(common_string + ".dat", common_string + ".json", verbose=True)
+    txt_to_json("test_data" + ".dat", "test_json" + ".json", verbose=True)
