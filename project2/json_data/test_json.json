@@ -6,7 +6,6 @@
             "track_id": 1,
             "parent_id": 0,
             "particle": "gamma",
-            "number_of_steps": 7,
             "lines": [
                 {
                     "step_index": 0,
@@ -165,15 +164,16 @@
                     "proc_name": "Transportation",
                     "line_type": "step"
                 }
-            ]
+            ],
+            "number_of_steps": 7
         },
         {
             "track_number": 1,
             "track_id": 1,
             "parent_id": 0,
             "particle": "gamma",
-            "number_of_steps": 2,
-            "lines": []
+            "lines": [],
+            "number_of_steps": 2
         }
     ]
 }

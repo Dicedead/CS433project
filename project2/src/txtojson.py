@@ -12,7 +12,8 @@ def txt_to_json(
         max_tracks=np.inf,
         skip_first_n_lines=0,
         next_track_index=0,
-        verbose=False
+        verbose=False,
+        uncompressed=True
 ):
     """
     Transforms input txt file to a json file
@@ -26,6 +27,7 @@ def txt_to_json(
     :param skip_first_n_lines: number of lines to skip at the beginning of file
     :param next_track_index: use if reading from a file previously read from
     :param verbose: progress information, boolean
+    :param uncompressed: if False, greatly reduces size of written output (by about 50%)
 
     :returns number of lines read, last track index
     """
@@ -35,8 +37,7 @@ def txt_to_json(
             "track_number": index,
             "track_id": int(split_line[9]),
             "parent_id": int(split_line[13]),
-            "particle": split_line[5],
-            "number_of_steps": 0
+            "particle": split_line[5]
         }
 
         if separated_steps_emissions:
@@ -45,8 +46,10 @@ def txt_to_json(
         else:
             track["lines"] = []
 
-        if len(split_line) > 15:
-            track["number_of_steps"] = int(split_line[15])
+        if uncompressed:
+            track["number_of_steps"] = 0
+            if len(split_line) > 15:
+                track["number_of_steps"] = int(split_line[15])
 
         return track
 
@@ -59,7 +62,7 @@ def txt_to_json(
             "dx": float(split_line[4]),
             "dy": float(split_line[5]),
             "dz": float(split_line[6]),
-            "kin": float(split_line[7]),
+            "en": float(split_line[7]),
             "de": 0. if index == 0 else float(split_line[8]),
             "step_length": 0. if index == 0 else float(split_line[9]),
             "next_volume": split_line[8] if index == 0 else split_line[11],
@@ -80,7 +83,7 @@ def txt_to_json(
             "dx": float(split_line[4]),
             "dy": float(split_line[5]),
             "dz": float(split_line[6]),
-            "de": float(split_line[7]),
+            "en": float(split_line[7]),
             "emitted_particle": split_line[8]
         }
 
@@ -94,6 +97,7 @@ def txt_to_json(
 
     track_index = next_track_index-1
     step_index = -1
+    emission_index = -1
     line_count = float(skip_first_n_lines)
 
     writing_mode = "w" if skip_first_n_lines == 0 else "a"
@@ -122,7 +126,12 @@ def txt_to_json(
             if len(description) > 0:
                 if description[1] == 'G4Track':
                     track_index += 1
+
+                    if not uncompressed and track_index > 0 and step_index < 1:
+                        json_tracks.pop()
+
                     step_index = -1
+                    emission_index = -1
                     curr_track = new_track(description, track_index)
                     json_tracks.append(curr_track)
 
@@ -135,31 +144,46 @@ def txt_to_json(
                 if description[1] != 'G4Track' and description[0] != 'Step#' and description[1] != "EndOf2ndaries":
                     if not description[0].startswith(':'):
                         step_index += 1
-                        curr_track["number_of_steps"] += 1
-                        step = new_step(description, step_index)
-                        if separated_steps_emissions:
-                            curr_track_steps.append(step)
-                        else:
-                            curr_track_lines.append(step)
+                        if uncompressed:
+                            curr_track["number_of_steps"] += 1
+
+                        if step_index <= 1 or (step_index > 1 and uncompressed):
+                            step = new_step(description, step_index)
+                            if separated_steps_emissions:
+                                curr_track_steps.append(step)
+                            else:
+                                curr_track_lines.append(step)
 
                     elif not description[1].startswith("List"):
-                        emission = new_emission(description, step_index)
+                        emission_index += 1
 
-                        if separated_steps_emissions:
-                            curr_track_emissions.append(emission)
-                        else:
-                            curr_track_lines.append(emission)
+                        early_em = step_index <= 1
+                        first_em = uncompressed or emission_index <= 0
+                        late_allowed_em = step_index > 1 and uncompressed
+                        if (early_em and first_em) or late_allowed_em:
+                            emission = new_emission(description, step_index)
+
+                            if separated_steps_emissions:
+                                curr_track_emissions.append(emission)
+                            else:
+                                curr_track_lines.append(emission)
 
                     else:
-                        spawn_in_step = int(description[6][0])
-                        if separated_steps_emissions:
-                            curr_track_steps[-1]["spawn_in_step"] = spawn_in_step
-                        else:
-                            curr_track_lines[-1]["spawn_in_step"] = spawn_in_step
+                        if uncompressed:
+                            spawn_in_step = int(description[6][0])
+                            if separated_steps_emissions:
+                                curr_track_steps[-1]["spawn_in_step"] = spawn_in_step
+                            else:
+                                curr_track_lines[-1]["spawn_in_step"] = spawn_in_step
+
+    if not uncompressed and track_index > 0 and step_index < 1:
+        json_tracks.pop()
 
     if verbose:
         print(f"Read {(100 * line_count)/total_lines}% of the file with {int(line_count - skip_first_n_lines)} lines in "
               f"this run and {track_index - next_track_index + 1} tracks in this run, now writing.")
+    if not uncompressed:
+        output_filename = "compressed_" + output_filename
     with open(output_folder + output_filename, writing_mode) as json_file:
         json.dump(json_bigobj, json_file, indent=4)
     if verbose:
@@ -170,4 +194,8 @@ def txt_to_json(
 
 if __name__ == "__main__":
     common_string = "E_0.1"
-    txt_to_json("test_data" + ".dat", "test_json" + ".json", verbose=True)
+    txt_to_json(common_string + ".dat", common_string + ".json",
+                verbose=True,
+                uncompressed=False,
+                separated_steps_emissions=True
+                )

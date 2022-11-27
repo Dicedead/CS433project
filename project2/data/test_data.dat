@@ -4,6 +4,7 @@ Step#    X(mm)    Y(mm)    Z(mm)       DX       DY       DZ KinE(MeV)  dE(MeV) S
     1      206      100      100    0.903    -0.43  0.00251    0.0989 0.000543      206       206     phantom compt
     :----- List of 2ndaries - #SpawnInStep=  1(Rest= 0,Along= 0,Post= 1), #SpawnTotal=  1 ---------------
     :       206       100       100     0.121     0.973     0.195  0.000553                 e-
+    :       206       100       100     0.121     0.973     0.195  0.000553                 e-
     :----------------------------------------------------------------- EndOf2ndaries Info ---------------
     2      403     6.23      101    0.939   -0.048     0.34    0.0979 0.000543      218       424     phantom compt
     :----- List of 2ndaries - #SpawnInStep=  1(Rest= 0,Along= 0,Post= 1), #SpawnTotal=  2 ---------------
