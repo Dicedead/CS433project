@@ -1,12 +1,22 @@
+import enum
+
 import numpy as np
 import random
 from dataclasses import dataclass
 
 
+class Type(enum.Enum):
+    photon = 0
+    electron = 1
+    positron = 2
+    proton = 4
+    neutron = 5
+
+
 class Arena:
     def __init__(self, wx: float, wy: float, wz: float, nx: int, ny: int, nz: int):
         self.M = np.zeros((nx, ny, nz))
-        self.voxel = np.array((wx / (nx + 1), wy / (ny + 1), wz / (nz + 1)))
+        self.voxel = np.array((wx / nx, wy / ny, wz / nz))
 
     def Deposit(self, pos, ene: float):
         idx = (pos / self.voxel).astype(int)
@@ -18,15 +28,13 @@ class Arena:
 
 
 class Particle:
-    def __init__(self, x: float, y: float, z: float, dx: float, dy: float, dz: float, e: float,
+    def __init__(self, x: float, y: float, z: float, dx: float, dy: float, dz: float, e: float, t: Type,
                  is_primary: bool = False):
         self.pos = np.array((x, y, z), dtype=float)
         self.dir = np.array((dx, dy, dz), dtype=float)
         self.ene = e
+        self.type = t
         self.is_primary = is_primary
-
-    def __lt__(self, Q):
-        return self.ene < Q.ene
 
     def Lose(self, energy: float, phantom: Arena):
         energy = min(energy, self.ene)  # lose this much energy and deposit it in the arena
@@ -87,4 +95,3 @@ class Event:
     @staticmethod
     def child_columns():
         return ['emission', 'x_c', 'y_c', 'z_c', 'dx_c', 'dy_c', 'dz_c', 'en_c']
-

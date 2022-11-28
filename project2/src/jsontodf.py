@@ -9,8 +9,14 @@ def jsontodf(
         input_json_folder="../json_data/",
         two_returns=False
 ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
+    def _track_to_event(init: dict, step: dict, emission: dict, type_str: str) -> Event:
 
-    def _track_to_event(init: dict, step: dict, emission: dict) -> Event:
+        def parse_particle_type() -> Type:
+            match type_str:
+                case "e-":
+                    return Type.electron
+                case _:
+                    return Type.photon
 
         def line_to_particle(line: dict, energy: float, is_primary: bool) -> Particle | None:
             if line is None:
@@ -23,7 +29,8 @@ def jsontodf(
                 dy=line['dy'],
                 dz=line['dz'],
                 e=line['en'] if not is_primary else energy,
-                is_primary=is_primary
+                is_primary=is_primary,
+                t=parse_particle_type()
             )
 
         def line_to_dirs_arr(line: dict) -> np.ndarray:
@@ -39,7 +46,7 @@ def jsontodf(
             if norm_s < tol or norm_e < tol:
                 return 0
 
-            return (s @ e)/(norm_s * norm_e)
+            return (s @ e) / (norm_s * norm_e)
 
         return Event(
             parent_particle=line_to_particle(init, step['en'], True),
@@ -50,7 +57,9 @@ def jsontodf(
         )
 
     def track_to_event_separated_lines(track: dict):
-        return _track_to_event(*track['steps'][:2], None if len(track['emissions']) == 0 else track['emissions'][0])
+        return _track_to_event(*track['steps'][:2],
+                               None if len(track['emissions']) == 0 else track['emissions'][0],
+                               track['particle'])
 
     def track_to_event_nonseplines(track: dict):
 
@@ -62,7 +71,7 @@ def jsontodf(
 
         lines = track['lines']
         first_emission = find_first_emission()
-        return _track_to_event(*lines[:2], first_emission)
+        return _track_to_event(*lines[:2], first_emission, track['particle'])
 
     with open(input_json_folder + input_json_filename, 'r') as f:
         data = json.loads(f.read())
