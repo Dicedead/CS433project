@@ -194,7 +194,7 @@ def txt_to_json(
 
 if __name__ == "__main__":
     common_string = "E_0.1"
-    txt_to_json(common_string + ".dat", common_string + ".json",
+    txt_to_json("test_data" + ".dat", "test_json" + ".json",
                 verbose=True,
                 uncompressed=False,
                 separated_steps_emissions=True

@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from dataclasses import dataclass
 
 
 class Arena:
@@ -25,7 +26,7 @@ class Particle:
         self.is_primary = is_primary
 
     def __lt__(self, Q):
-        return P.ene < Q.ene
+        return self.ene < Q.ene
 
     def Lose(self, energy: float, phantom: Arena):
         energy = min(energy, self.ene)  # lose this much energy and deposit it in the arena
@@ -41,3 +42,49 @@ class Particle:
         self.dir[1] += s
         self.dir[2] += (cos_angle - s)
         self.dir /= np.linalg.norm(self.dir)
+
+
+@dataclass
+class Event:
+    parent_particle: Particle
+    distance: float
+    delta_e: float
+    cos_theta: float
+    child_particle: Particle | None
+
+    def to_entry(self) -> dict:
+        c = self.child_particle
+        p = self.parent_particle  # shorthand
+
+        entry = {
+            'x_p': p.pos[0], 'y_p': p.pos[1], 'z_p': p.pos[2],
+            'dx_p': p.dir[0], 'dy_p': p.dir[1], 'dz_p': p.dir[2],
+            'en_p': p.ene,
+
+            'dist_p': self.distance,
+            'de_p': self.delta_e,
+            'cos_p': self.cos_theta,
+        }
+
+        if c is None:
+            augmented_entry = {
+                'emission': 0,
+                'x_c': np.NaN, 'y_c': np.NaN, 'z_c': np.NaN,
+                'dx_c': np.NaN, 'dy_c': np.NaN, 'dz_c': np.NaN,
+                'en_c': np.NaN
+            }
+        else:
+            augmented_entry = {
+                'emission': 1,
+                'x_c': c.pos[0], 'y_c': c.pos[1], 'z_c': c.pos[2],
+                'dx_c': c.dir[0], 'dy_c': c.dir[1], 'dz_c': c.dir[2],
+                'en_c': c.ene,
+            }
+
+        entry.update(augmented_entry)
+        return entry
+
+    @staticmethod
+    def child_columns():
+        return ['emission', 'x_c', 'y_c', 'z_c', 'dx_c', 'dy_c', 'dz_c', 'en_c']
+
