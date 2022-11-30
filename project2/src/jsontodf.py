@@ -9,6 +9,15 @@ def jsontodf(
         input_json_folder="../json_data/",
         two_returns=False
 ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Saves input json file to a pandas dataframe in memory
+
+    :param input_json_filename: str, name of input file
+    :param input_json_folder: str, name of input folder, optional
+    :param two_returns: whether to return events with emissions and without emissions separately or not
+    :return: from each track only the first event is taken and saved into memory, agglomerated into one or two
+             dataframes (according to the two_returns) parameter
+    """
     def _track_to_event(init: dict, step: dict, emission: dict, type_str: str) -> Event:
 
         def parse_particle_type() -> Type:
