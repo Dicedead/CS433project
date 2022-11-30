@@ -24,8 +24,12 @@ def jsontodf(
             match type_str:
                 case "e-":
                     return Type.electron
-                case _:
+                case "e+":
+                    return Type.positron
+                case "gamma":
                     return Type.photon
+                case _:
+                    raise Exception(f"Unknown particle type in jsontodf: {type_str}")
 
         def line_to_particle(line: dict, energy: float, is_primary: bool) -> Particle | None:
             if line is None:
@@ -101,4 +105,4 @@ def jsontodf(
 
 
 if __name__ == "__main__":
-    jsontodf("compressed_test_json.json")
+    jsontodf("../json_data/json_lung/compressed_E_10.0.json")
