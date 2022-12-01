@@ -38,7 +38,8 @@ def material_dataset_txt_to_json(
 def material_dataset_jsontodf(
         material: str,
         json_folder=None,
-        two_returns=False
+        two_returns=False,
+        verbose=False
 ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
     if json_folder is None:
         json_folder = "../json_data/json_" + material + "/"
@@ -49,6 +50,9 @@ def material_dataset_jsontodf(
 
         if file == ".gitkeep":
             continue
+
+        if verbose:
+            print(f"Converting {file}...")
 
         if two_returns:
             df1, df2 = jsontodf(
@@ -63,12 +67,20 @@ def material_dataset_jsontodf(
                 input_json_folder=json_folder
             ))
 
+    if verbose:
+        print(f"Concatenating dataframes")
+
     if two_returns:
-        return pd.concat(emissions), pd.concat(no_emissions)
+        res = pd.concat(emissions), pd.concat(no_emissions)
     else:
-        return pd.concat(dataframes)
+        res = pd.concat(dataframes)
+
+    if verbose:
+        print("Done!")
+
+    return res
 
 
 if __name__ == "__main__":
-    lung_dataset = material_dataset_jsontodf("lung")
-    lung_dataset.to_pickle("../pickled_data/lung_dataset.pkl")
+    water_dataset = material_dataset_jsontodf("water", verbose=True, two_returns=False)
+    water_dataset.to_pickle("../pickled_data/water_dataset.pkl")
