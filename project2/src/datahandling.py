@@ -9,7 +9,8 @@ from txtojson import txt_to_json
 def material_dataset_txt_to_json(
         material: str,
         input_folder=None,
-        output_folder=None
+        output_folder=None,
+        verbose=True
 ):
     if input_folder is None:
         input_folder = "../data/data_" + material + "/"
@@ -26,7 +27,7 @@ def material_dataset_txt_to_json(
             zip_ref.extractall(input_folder)
         new_name = material + "_" + str(idx)
         txt_to_json("-", new_name + ".json",
-                    verbose=True,
+                    verbose=verbose,
                     uncompressed=False,
                     separated_steps_emissions=True,
                     input_folder=input_folder,
@@ -81,6 +82,15 @@ def material_dataset_jsontodf(
     return res
 
 
+def from_zip_to_pickle(
+        material: str,
+        verbose=True,
+):
+    material_dataset_txt_to_json(material, verbose=verbose)
+    material_dataset = material_dataset_jsontodf(material, verbose=verbose, two_returns=False)
+    material_dataset.to_pickle(f"../pickled_data/{material}_dataset.pkl")
+
+
 if __name__ == "__main__":
-    water_dataset = material_dataset_jsontodf("water", verbose=True, two_returns=False)
-    water_dataset.to_pickle("../pickled_data/water_dataset.pkl")
+    from_zip_to_pickle("water")
+    from_zip_to_pickle("lung")

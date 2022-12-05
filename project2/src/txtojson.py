@@ -59,10 +59,10 @@ def txt_to_json(
             "x": float(split_line[1]),
             "y": float(split_line[2]),
             "z": float(split_line[3]),
-            "dx": float(split_line[4]),
-            "dy": float(split_line[5]),
-            "dz": float(split_line[6]),
-            "en": float(split_line[7]),
+            "dx": 1. if index == 0 else float(split_line[4]),
+            "dy": 0 if index == 0 else float(split_line[5]),
+            "dz": 0. if index == 0 else float(split_line[6]),
+            "en": float(split_line[4]) if index == 0 else float(split_line[7]),
             "de": 0. if index == 0 else float(split_line[8]),
             "step_length": 0. if index == 0 else float(split_line[9]),
             "next_volume": split_line[8] if index == 0 else split_line[11],
@@ -148,6 +148,10 @@ def txt_to_json(
                             curr_track["number_of_steps"] += 1
 
                         if step_index <= 1 or (step_index > 1 and uncompressed):
+
+                            if step_index == 0:
+                                adapt_line(description)
+
                             step = new_step(description, step_index)
                             if separated_steps_emissions:
                                 curr_track_steps.append(step)
