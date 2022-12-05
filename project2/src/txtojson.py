@@ -149,9 +149,6 @@ def txt_to_json(
 
                         if step_index <= 1 or (step_index > 1 and uncompressed):
 
-                            if step_index == 0:
-                                adapt_line(description)
-
                             step = new_step(description, step_index)
                             if separated_steps_emissions:
                                 curr_track_steps.append(step)
