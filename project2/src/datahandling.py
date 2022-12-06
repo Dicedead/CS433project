@@ -22,18 +22,25 @@ def material_dataset_txt_to_json(
 
         if file == ".gitkeep":
             continue
+        if file == "-":
+            os.remove(input_folder + file)
+            continue
+
+        if verbose:
+            print(f"Converting {file} to json.")
 
         with zipfile.ZipFile(input_folder + file, 'r') as zip_ref:
+            extracted_file_name = zip_ref.namelist()[0]
             zip_ref.extractall(input_folder)
-        new_name = material + "_" + str(idx)
-        txt_to_json("-", new_name + ".json",
+        new_name = material + "_" + file
+        txt_to_json(extracted_file_name, new_name + ".json",
                     verbose=verbose,
                     uncompressed=False,
                     separated_steps_emissions=True,
                     input_folder=input_folder,
                     output_folder=output_folder
                     )
-        os.remove(input_folder + "-")
+        os.remove(input_folder + extracted_file_name)
 
 
 def material_dataset_jsontodf(
@@ -53,7 +60,7 @@ def material_dataset_jsontodf(
             continue
 
         if verbose:
-            print(f"Converting {file}...")
+            print(f"Converting {file} to dataframe.")
 
         if two_returns:
             df1, df2 = jsontodf(
@@ -77,7 +84,7 @@ def material_dataset_jsontodf(
         res = pd.concat(dataframes)
 
     if verbose:
-        print("Done!")
+        print(f"Done! ({material})")
 
     return res
 
@@ -92,5 +99,5 @@ def from_zip_to_pickle(
 
 
 if __name__ == "__main__":
-    from_zip_to_pickle("water")
+    # from_zip_to_pickle("water")
     from_zip_to_pickle("lung")

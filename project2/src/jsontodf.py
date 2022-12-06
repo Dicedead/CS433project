@@ -31,7 +31,7 @@ def jsontodf(
                 case _:
                     raise Exception(f"Unknown particle type in jsontodf: {type_str}")
 
-        def line_to_particle(line: dict, energy: float, is_primary: bool) -> Particle | None:
+        def line_to_particle(line: dict, is_primary: bool) -> Particle | None:
             if line is None:
                 return None
             return Particle(
@@ -41,7 +41,7 @@ def jsontodf(
                 dx=line['dx'],
                 dy=line['dy'],
                 dz=line['dz'],
-                e=line['en'] if not is_primary else energy,
+                e=line['en'],
                 is_primary=is_primary,
                 t=parse_particle_type()
             )
@@ -62,11 +62,11 @@ def jsontodf(
             return (s @ e) / (norm_s * norm_e)
 
         return Event(
-            parent_particle=line_to_particle(init, step['en'], True),
+            parent_particle=line_to_particle(init, True),
             distance=step['step_length'],
             cos_theta=cos(init, step),
             delta_e=step['de'],
-            child_particle=line_to_particle(emission, 0, False)
+            child_particle=line_to_particle(emission, False)
         )
 
     def track_to_event_separated_lines(track: dict):
