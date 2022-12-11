@@ -99,5 +99,5 @@ def from_zip_to_pickle(
 
 
 if __name__ == "__main__":
-    # from_zip_to_pickle("water")
-    from_zip_to_pickle("lung")
+    from_zip_to_pickle("water")
+    # from_zip_to_pickle("lung")
