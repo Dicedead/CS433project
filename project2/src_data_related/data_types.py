@@ -64,6 +64,7 @@ class Event:
         c = self.child_particle
         p = self.parent_particle  # shorthand
 
+
         entry = {
             'x_p': p.pos[0], 'y_p': p.pos[1], 'z_p': p.pos[2],
             'dx_p': p.dir[0], 'dy_p': p.dir[1], 'dz_p': p.dir[2],
@@ -79,14 +80,14 @@ class Event:
                 'emission': 0,
                 'x_c': np.NaN, 'y_c': np.NaN, 'z_c': np.NaN,
                 'dx_c': np.NaN, 'dy_c': np.NaN, 'dz_c': np.NaN,
-                'en_c': np.NaN
+                'en_c': np.NaN, 'cos_c': np.NaN
             }
         else:
             augmented_entry = {
                 'emission': 1,
                 'x_c': c.pos[0], 'y_c': c.pos[1], 'z_c': c.pos[2],
                 'dx_c': c.dir[0], 'dy_c': c.dir[1], 'dz_c': c.dir[2],
-                'en_c': c.ene,
+                'en_c': c.ene, 'cos_c': (p.dir @ c.dir) / (np.linalg.norm(p.dir) * np.linalg.norm(c.dir))
             }
 
         entry.update(augmented_entry)
@@ -94,4 +95,4 @@ class Event:
 
     @staticmethod
     def child_columns():
-        return ['emission', 'x_c', 'y_c', 'z_c', 'dx_c', 'dy_c', 'dz_c', 'en_c']
+        return ['emission', 'x_c', 'y_c', 'z_c', 'dx_c', 'dy_c', 'dz_c', 'en_c', 'cos_c']

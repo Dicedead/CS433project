@@ -59,14 +59,14 @@ def txt_to_json(
             "x": float(split_line[1]),
             "y": float(split_line[2]),
             "z": float(split_line[3]),
-            "dx": 1. if index == 0 else float(split_line[4]),
-            "dy": 0 if index == 0 else float(split_line[5]),
-            "dz": 0. if index == 0 else float(split_line[6]),
-            "en": float(split_line[4]) if index == 0 else float(split_line[7]),
-            "de": 0. if index == 0 else float(split_line[8]),
-            "step_length": 0. if index == 0 else float(split_line[9]),
-            "next_volume": split_line[8] if index == 0 else split_line[11],
-            "proc_name": split_line[9] if index == 0 else split_line[12]
+            "dx": float(split_line[4]),
+            "dy": float(split_line[5]),
+            "dz": float(split_line[6]),
+            "en": float(split_line[7]),
+            "de": float(split_line[8]),
+            "step_length": float(split_line[9]),
+            "next_volume": split_line[11],
+            "proc_name": split_line[12]
         }
 
         if not separated_steps_emissions:
