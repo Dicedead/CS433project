@@ -93,7 +93,7 @@ def from_zip_to_pickle(
         material: str,
         verbose=True,
 ):
-    # material_dataset_txt_to_json(material, verbose=verbose)
+    material_dataset_txt_to_json(material, verbose=verbose)
     material_dataset = material_dataset_jsontodf(material, verbose=verbose, two_returns=False)
     material_dataset.to_pickle(f"../pickled_data/{material}_dataset.pkl")
 
