@@ -1,9 +1,15 @@
+import sys
 import math
+import pickle
 import queue
 
 import matplotlib.pyplot as plt
-import sys
+import torch
+
+from sklearn.preprocessing import PolynomialFeatures
+
 from data_types import *
+from emission_event_gan import *
 
 
 def CoreEvent(max_dist: float, max_dele: float, max_cos: float, prob: float):
@@ -20,7 +26,7 @@ def CoreEvent(max_dist: float, max_dele: float, max_cos: float, prob: float):
         return distance, delta_e, cos_theta, None
 
 
-def GetEvent(P: Particle):
+def GetEventTest(P: Particle):
     """this is the function you are responsible for creating, given a particle it returns:
     distance:	distance the particle travels before having this event
     delta_e:	amount of energy that the particle loses during this event
@@ -32,6 +38,50 @@ def GetEvent(P: Particle):
     elif P.type == Type.electron:
         return CoreEvent(1.0, 0.2, 0.1, 0.75)
 
+
+def GetEvent(P: Particle):
+    distance = predict_distance(P)
+    emission = predict_emission(P, distance)
+
+    if emission:
+        de_p, cos_p, en_c, cos_c = emission_event_prediction(P, distance)
+        child_particle = Particle.create_child(P, distance, en_c, cos_c)
+
+    else:
+        de_p = 0.
+        cos_p = no_emission_event_prediction(P, distance)
+        child_particle = None
+
+    return distance, de_p, cos_p, child_particle
+
+
+def predict_distance(p: Particle):
+    pass
+
+
+def predict_emission(p: Particle, distance: float):
+    def log_reg_features(dist_p, en_p):
+        polyfeat = PolynomialFeatures(degree=4)
+        x = np.array([dist_p, en_p])
+        return np.concatenate([x, polyfeat.fit_transform(x), np.exp(-en_p), np.exp(-dist_p)])
+
+    return clf_logreg.predict(log_reg_features(distance, p.ene))
+
+
+def emission_event_prediction(p: Particle, distance: float):
+    with torch.no_grad():
+        pred = event_emission_model(torch.randn(4), torch.from_numpy(np.array([distance, p.ene])))  # TODO put noise size in model attribute
+
+    pred = pred.detach().cpu().numpy()
+    return pred
+
+
+with open('../model_parameters/water/emission_prediction.sav', "lb") as f:
+    clf_logreg = pickle.load(f)
+
+event_emission_model = EmissionEventGenerator()
+event_emission_model.load_state_dict(torch.load('../model_parameters/water/event_prediction.sav'))
+event_emission_model.eval()
 
 WX, WY, WZ = 300, 200, 200  # 300x200x200 mm
 NX, NY, NZ = 150, 100, 100  # for 2x2x2 mm voxels
@@ -61,7 +111,7 @@ while not ToSimulate.empty() > 0:
         DONE += 1
     NALL += 1
     while P.ene > 0.0:
-        distance, delta_e, cos_theta, generated_particle = GetEvent(P)
+        distance, delta_e, cos_theta, generated_particle = GetEventTest(P)
         P.Move(distance)
         P.Lose(delta_e, A)
         P.Rotate(cos_theta)
