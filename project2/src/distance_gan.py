@@ -13,26 +13,23 @@ from sklearn.model_selection import train_test_split
 
 
 @dataclass
-class EmissionEventHyperparameters:
+class DistanceHyperparameters:
     batchsize: int = 128
     num_epochs: int = 1
-    noise_size: int = 4
+    noise_size: int = 2
     n_critic: int = 5
     gp_lambda: float = 10.
 
 
-class EmissionEventGenerator(nn.Module):
+class DistanceGenerator(nn.Module):
     def __init__(self):
         super().__init__()
 
         self.model = nn.Sequential(
-            nn.Linear(4 + 2, 128),  # input: (noise, dist_p, en_p)  # TODO hp in class params
+            nn.Linear(2 + 1, 64), # input: (noise , en_p)  # TODO hp in class params
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Dropout(0.5),
-            nn.Linear(128, 256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Dropout(0.3),
-            nn.Linear(256, 4),  # output: (cos_p, de_p, cos_c, en_c)
+            nn.Dropout(0.2),
+            nn.Linear(64, 1), # output: (dist_p)
             nn.Tanh()
         )
 
@@ -41,18 +38,15 @@ class EmissionEventGenerator(nn.Module):
         return out
 
 
-class EmissionEventCritic(nn.Module):
+class DistanceCritic(nn.Module):
     def __init__(self):
         super().__init__()
 
         self.model = nn.Sequential(
-            nn.Linear(6, 128),  # input: (cos_p, de_p, cos_c, en_c, dist_p, en_p)
+            nn.Linear(2, 32), # input: (dist_p, en_p)
             nn.LeakyReLU(0.2, inplace=True),
             nn.Dropout(0.3),
-            nn.Linear(128, 256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Dropout(0.25),
-            nn.Linear(256, 1),
+            nn.Linear(32, 1),
             nn.Sigmoid()
         )
 
@@ -61,14 +55,14 @@ class EmissionEventCritic(nn.Module):
         return out.squeeze()
 
 
-class EmissionEventDataset(Dataset):
+class DistanceDataset(Dataset):
 
     def __init__(self, path="../pickled_data/water_dataset.pkl", test_size=0.3):
         dataset = pd.read_pickle(path)
         dataset = dataset[dataset["emission"] == 1]
 
-        x = dataset[["cos_p", "de_p", "cos_c", "en_c"]]
-        y = dataset[["dist_p", "en_p"]]
+        x = dataset[["dist_p"]]
+        y = dataset[["en_p"]]
 
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size)
 
@@ -88,12 +82,12 @@ if __name__ == "__main__":
     torch.set_num_threads(2)
     torch.manual_seed(1)
 
-    hp = EmissionEventHyperparameters()
+    hp = DistanceHyperparameters()
 
-    dataset = EmissionEventDataset()
+    dataset = DistanceDataset()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=hp.batchsize, num_workers=1, shuffle=True,
                                              drop_last=True, pin_memory=True)
-    critic, generator = EmissionEventCritic().to("cuda"), EmissionEventGenerator().to("cuda")
+    critic, generator = DistanceCritic().to("cuda"), DistanceGenerator().to("cuda")
 
     critic_optimizer = optim.AdamW(critic.parameters(), lr=1e-4, betas=(0., 0.9))
     generator_optimizer = optim.AdamW(generator.parameters(), lr=1e-4, betas=(0., 0.9))
@@ -157,7 +151,7 @@ if __name__ == "__main__":
 
             iters += 1
 
-    torch.save(generator.state_dict(), "../model_parameters/water/event_prediction.sav")
+    torch.save(generator.state_dict(), "../model_parameters/water/distance_prediction.sav")
 
     plt.title("Generator and critic losses during training")
     plt.plot(generator_losses, label="G")
