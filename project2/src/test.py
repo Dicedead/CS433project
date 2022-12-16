@@ -43,7 +43,7 @@ def GetEventTest(P: Particle):
 
 def GetEvent(P: Particle):
     distance = predict_distance(P)[0]
-    emission = predict_emission(P, distance)
+    emission = predict_emission(P, distance)[0]
 
     if emission:
         de_p, cos_p, en_c, cos_c = emission_event_prediction(P, distance)
@@ -67,7 +67,7 @@ def predict_distance(p: Particle):
 
 def predict_emission(p: Particle, distance: float):
     def log_reg_features(dist_p, en_p):
-        polyfeat = PolynomialFeatures(degree=4)
+        polyfeat = PolynomialFeatures(degree=3)  # TODO put degree in log reg class attribute
         x = np.array([[dist_p, en_p]])
         y = polyfeat.fit_transform(x)
         z = np.exp(-np.array([[en_p, dist_p]]))
@@ -100,7 +100,7 @@ WX, WY, WZ = 300, 200, 200  # 300x200x200 mm
 NX, NY, NZ = 150, 100, 100  # for 2x2x2 mm voxels
 A = Arena(WX, WY, WZ, NX, NY, NZ)
 NMC = 100000  # number of particles we want to simulate
-EMAX = 20.0  # maximum energy of particles
+EMAX = 6.0  # maximum energy of particles
 
 ToSimulate = queue.Queue()  # the queue of particles
 for i in range(NMC):
@@ -125,7 +125,6 @@ while not ToSimulate.empty() > 0:
     NALL += 1
     while P.ene > 0.0:
         distance, delta_e, cos_theta, generated_particle = GetEvent(P)
-        print(NALL)
         P.Move(distance)
         P.Lose(delta_e, A)
         P.Rotate(cos_theta)
