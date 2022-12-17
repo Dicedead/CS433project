@@ -5,6 +5,7 @@ import queue
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import torch
 
 from sklearn.preprocessing import PolynomialFeatures
@@ -60,8 +61,7 @@ def GetEvent(P: Particle):
 def predict_distance(p: Particle):
     with torch.no_grad():
         pred = distance_model(torch.randn(2), torch.from_numpy(np.array([p.ene])).float())  # TODO put noise size in model attribute
-
-    pred = pred.detach().cpu().numpy()
+        pred = pred.detach().cpu().numpy()
     return pred
 
 
@@ -79,7 +79,8 @@ def predict_emission(p: Particle, distance: float):
 
 def emission_event_prediction(p: Particle, distance: float):
     with torch.no_grad():
-        pred = event_emission_model(torch.randn(4), torch.from_numpy(np.array([distance, p.ene])).float())  # TODO put noise size in model attribute
+        pred = event_emission_model(torch.randn(4), torch.from_numpy(np.array([distance, p.ene])).float())
+        # TODO put noise size in model attribute
 
     pred = pred.detach().cpu().numpy()
     return pred
@@ -87,6 +88,9 @@ def emission_event_prediction(p: Particle, distance: float):
 
 with open('../model_parameters/water/emission_prediction.sav', "rb") as f:
     clf_logreg = pickle.load(f)
+
+water_dataset = pd.read_pickle("../pickled_data/water_dataset.pkl")
+energy_levels = [i/10 for i in range(1, 61)]
 
 event_emission_model = EmissionEventGenerator()
 event_emission_model.load_state_dict(torch.load('../model_parameters/water/event_prediction.sav'))
@@ -112,7 +116,7 @@ for i in range(NMC):
     zpos = (1 + s) * WZ / 2
     zdir = 0.2 * s
     xdir = math.sqrt(1 - ydir ** 2 - zdir ** 2)
-    e = EMAX * random.gammavariate(2.0, 0.667)
+    e = EMAX * random.random()
     P = Particle(0.0, ypos, zpos, xdir, ydir, zdir, e, Type.photon, True)
     ToSimulate.put(P)
 
@@ -124,12 +128,15 @@ while not ToSimulate.empty() > 0:
         DONE += 1
     NALL += 1
     while P.ene > 0.0:
+        print(NALL)
         distance, delta_e, cos_theta, generated_particle = GetEvent(P)
         P.Move(distance)
         P.Lose(delta_e, A)
         P.Rotate(cos_theta)
         if generated_particle is not None:
-            ToSimulate.put(generated_particle)
+            pass
+            # Drop generated electrons
+            # ToSimulate.put(generated_particle)
     if DONE % 1000:
         sys.stdout.write(f"Finished {DONE:8} out of {NMC:8} {(100.0 * DONE) / NMC:.2f} %\r")
         sys.stdout.flush()
