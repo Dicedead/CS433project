@@ -3,11 +3,6 @@ import math
 import pickle
 import queue
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import torch
-
 from sklearn.preprocessing import PolynomialFeatures
 
 from data_types import *
@@ -59,10 +54,7 @@ def GetEvent(P: Particle):
 
 
 def predict_distance(p: Particle):
-    with torch.no_grad():
-        pred = distance_model(torch.randn(2), torch.from_numpy(np.array([p.ene])).float())  # TODO put noise size in model attribute
-        pred = pred.detach().cpu().numpy()
-    return pred
+    return distance_model.generate_from_particle(p)
 
 
 def predict_emission(p: Particle, distance: float):
@@ -78,12 +70,7 @@ def predict_emission(p: Particle, distance: float):
 
 
 def emission_event_prediction(p: Particle, distance: float):
-    with torch.no_grad():
-        pred = event_emission_model(torch.randn(4), torch.from_numpy(np.array([distance, p.ene])).float())
-        # TODO put noise size in model attribute
-
-    pred = pred.detach().cpu().numpy()
-    return pred
+    return event_emission_model.generate_from_particle(p, distance)
 
 
 with open('../model_parameters/water/emission_prediction.sav', "rb") as f:

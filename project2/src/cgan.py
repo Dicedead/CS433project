@@ -67,22 +67,25 @@ class CGANHyperparameters:
     opti_lr_gen: float = 1e-4
     opti_betas_gen: tuple[float, float] = (0, 0.9)
 
-    opti_lr_cri: float = opti_lr_gen
-    opti_betas_cri: tuple[float, float] = opti_betas_gen
+    opti_lr_cri: float = 1e-4
+    opti_betas_cri: tuple[float, float] = (0, 0.9)
 
 
 class CGANGenerator(nn.Module):
-    def __init__(self, hp: CGANHyperparameters, data: ParticlesDataset):
+    def __init__(self, hp: CGANHyperparameters, mean_x: float, std_x: float, mean_y: float, std_y: float):
         super().__init__()
         self.__noise_size = hp.noise_size
         self.model = self.define_model()
-        self.__data = data
+        self.__mean_x = mean_x
+        self.__mean_y = mean_y
+        self.__std_x = std_x
+        self.__std_y = std_y
 
     def forward(self, noise, labels):
         out = self.model(torch.cat([noise, labels], dim=-1))
         return out
 
-    def generate_from(self, p: Particle, *args):
+    def generate_from_particle(self, p: Particle, *args):
         with torch.no_grad():
             pred = self.__unstandardize_x(
                 self(
@@ -95,10 +98,10 @@ class CGANGenerator(nn.Module):
         return pred.detach().cpu().numpy()
 
     def __standardize_y(self, arr: np.ndarray):
-        return (arr - self.__data.mean_y) / self.__data.std_y
+        return (arr - self.__mean_y) / self.__std_y
 
     def __unstandardize_x(self, arr: np.ndarray):
-        return self.__data.std_x * arr + self.__data.mean_x
+        return self.__std_x * arr + self.__mean_x
 
     def _get_noise_size(self):
         return self.__noise_size
@@ -124,6 +127,10 @@ class CGANCritic(nn.Module):
     @abstractmethod
     def define_model(self):
         pass
+
+
+def dataset_to_stats(data: ParticlesDataset):
+    return data.mean_x, data.std_x, data.mean_y, data.std_y
 
 
 def train(
@@ -182,11 +189,11 @@ def train(
                 # Update Generator
                 generator_optimizer.zero_grad()
 
-                fake_class_labels = dataset.y_train[torch.randint(high=len(dataset), size=[hp.batchsize])].to(
+                fake_labels = dataset.y_train[torch.randint(high=len(dataset), size=[hp.batchsize])].to(
                     device="cuda")
                 noise = torch.randn((hp.batchsize, hp.noise_size), device="cuda")
-                with torch.no_grad(): fake_sample = generator(noise, fake_class_labels)
-                critic_output_fake = critic(fake_sample, fake_class_labels)
+                with torch.no_grad(): fake_sample = generator(noise, fake_labels)
+                critic_output_fake = critic(fake_sample, fake_labels)
                 generator_loss = -critic_output_fake.mean()
 
                 generator_loss.backward()
@@ -207,8 +214,21 @@ def train(
     return generator_losses, critic_losses
 
 
-def save(generator: CGANGenerator, path) -> None:
-    torch.save(generator.state_dict(), path)
+def save(generator: CGANGenerator, data: ParticlesDataset, model_path: str, data_stats_path: str) -> None:
+    torch.save(generator.state_dict(), model_path)
+    filenames = ["mean_x", "std_x", "mean_y", "std_y"]
+    for idx, series in enumerate(list(dataset_to_stats(data))):
+        series.to_pickle(f"{data_stats_path}/{filenames[idx]}.pkl")
+
+
+def load(model_class: type, hp: CGANHyperparameters, model_path: str, data_stats_path: str) -> CGANGenerator:
+    ls = []
+    for fn in ["mean_x", "std_x", "mean_y", "std_y"]:
+        ls.append(pd.read_pickle(f"{data_stats_path}/{fn}.pkl"))
+    distance_model = model_class(hp, *ls)
+    distance_model.load_state_dict(torch.load(model_path))
+    distance_model.eval()
+    return distance_model
 
 
 def plot_training_losses(generator_losses: list, critic_losses: list) -> None:

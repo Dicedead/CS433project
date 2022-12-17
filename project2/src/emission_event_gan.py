@@ -11,8 +11,8 @@ class EmissionEventHyperparameters(CGANHyperparameters):
 
 
 class EmissionEventGenerator(CGANGenerator):
-    def __init__(self, hp: EmissionEventHyperparameters, data: ParticlesDataset):
-        super().__init__(hp, data)
+    def __init__(self, hp: EmissionEventHyperparameters, mean_x: float, std_x: float, mean_y: float, std_y: float):
+        super().__init__(hp, mean_x, std_x, mean_y, std_y)
 
     def define_model(self):
         return nn.Sequential(
@@ -51,8 +51,9 @@ if __name__ == "__main__":
                                columns_y=["dist_p", "en_p"],
                                emission_only=True)
     hp = EmissionEventHyperparameters()
-    gen = EmissionEventGenerator(hp, dataset)
+    gen = EmissionEventGenerator(hp, *dataset_to_stats(dataset))
     cri = EmissionEventCritic()
     gen_losses, cri_losses = train(gen, cri, hp, dataset)
-    save(gen, "../model_parameters/water/event_prediction.sav")
+    save(gen, dataset, "../model_parameters/water/event_prediction.sav",
+         "../model_parameters/water/event_prediction_dataset_stats")
     plot_training_losses(gen_losses, cri_losses)
