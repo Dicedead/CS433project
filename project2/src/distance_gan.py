@@ -3,16 +3,22 @@ from cgan import *
 
 @dataclass
 class DistanceHyperparameters(CGANHyperparameters):
-    batchsize: int = 128
+    batchsize: int = 64
     num_epochs: int = 1
-    noise_size: int = 2
+    noise_size: int = 1
     n_critic: int = 5
     gp_lambda: float = 10.
+
+    noise_distrib = torch.distributions.Exponential(1)
+
+    def generate_noise(self, n):
+        return self.noise_distrib.sample((n, self.noise_size)).to(device="cuda")
 
 
 class DistanceGenerator(CGANGenerator):
     def __init__(self, hp: DistanceHyperparameters, mean_x: float, std_x: float, mean_y: float, std_y: float):
         super().__init__(hp, mean_x, std_x, mean_y, std_y)
+        self.__hp = hp
 
     def define_model(self):
         return nn.Sequential(
@@ -25,6 +31,10 @@ class DistanceGenerator(CGANGenerator):
             nn.Linear(128, 1),
             nn.Tanh()
         )
+
+    @staticmethod
+    def load(model_path: str, data_stats_path: str) -> CGANGenerator:
+        return load(DistanceGenerator, DistanceHyperparameters(), model_path, data_stats_path)
 
 
 class DistanceCritic(CGANCritic):

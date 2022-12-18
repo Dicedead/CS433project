@@ -70,11 +70,15 @@ class CGANHyperparameters:
     opti_lr_cri: float = 1e-4
     opti_betas_cri: tuple[float, float] = (0, 0.9)
 
+    def generate_noise(self, n):
+        return torch.randn((n, self.noise_size), device="cuda")
+
 
 class CGANGenerator(nn.Module):
     def __init__(self, hp: CGANHyperparameters, mean_x: float, std_x: float, mean_y: float, std_y: float):
         super().__init__()
         self.__noise_size = hp.noise_size
+        self.__hp = hp
         self.model = self.define_model()
         self.__mean_x = mean_x
         self.__mean_y = mean_y
@@ -89,7 +93,7 @@ class CGANGenerator(nn.Module):
         with torch.no_grad():
             pred = self.__unstandardize_x(
                 self(
-                    torch.randn(self.__noise_size),
+                    self.__hp.generate_noise(1),
                     torch.from_numpy(
                         self.__standardize_y(np.array(self._extract_relevant_info(p, args)))
                     ).float()
@@ -168,7 +172,7 @@ def train(
             critic_output_real = critic(real_samples, real_labels)
             critic_loss_real = critic_output_real.mean()
 
-            noise = torch.randn((hp.batchsize, hp.noise_size), device="cuda")
+            noise = hp.generate_noise(hp.batchsize)
             with torch.no_grad():
                 fake_sample = generator(noise, real_labels)
             critic_output_fake = critic(fake_sample, real_labels)
@@ -191,7 +195,7 @@ def train(
 
                 fake_labels = dataset.y_train[torch.randint(high=len(dataset), size=[hp.batchsize])].to(
                     device="cuda")
-                noise = torch.randn((hp.batchsize, hp.noise_size), device="cuda")
+                noise = hp.generate_noise(hp.batchsize)
                 with torch.no_grad(): fake_sample = generator(noise, fake_labels)
                 critic_output_fake = critic(fake_sample, fake_labels)
                 generator_loss = -critic_output_fake.mean()
@@ -203,7 +207,7 @@ def train(
             if verbose and batch_idx % 100 == 0:
                 elapsed_time = time.time() - start_time
                 print(f"[{epoch:>2}/{hp.num_epochs}][{iters:>7}][{elapsed_time:8.2f}s]\t"
-                      f"d_loss/g_loss: {critic_loss.item():4.2}/{generator_loss.item():4.2}\t")
+                      f"critic loss / generator loss: {critic_loss.item():4.2}/{generator_loss.item():4.2}\t")
 
             # Save Losses for plotting later
             generator_losses.append(generator_loss.item())
