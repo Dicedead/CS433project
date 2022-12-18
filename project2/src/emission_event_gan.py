@@ -1,3 +1,5 @@
+import torch.distributions
+
 from cgan import *
 
 
@@ -5,9 +7,21 @@ from cgan import *
 class EmissionEventHyperparameters(CGANHyperparameters):
     batchsize: int = 128
     num_epochs: int = 1
-    noise_size: int = 4
+    noise_size: int = 3
     n_critic: int = 5
     gp_lambda: float = 10.
+
+    cos_p_noise = torch.distributions.Kumaraswamy(0.5, 0.5)
+    en_c_noise = torch.distributions.Exponential(1.)
+    cos_c_noise = torch.distributions.Exponential(0.5)
+
+    def generate_noise(self, n, device="cuda"):
+        shape = (n, 1)
+        return torch.cat([
+            self.cos_p_noise.sample(shape),
+            self.en_c_noise.sample(shape),
+            self.cos_c_noise.sample(shape)
+        ], dim=-1).to(device=device)
 
 
 class EmissionEventGenerator(CGANGenerator):
@@ -22,7 +36,7 @@ class EmissionEventGenerator(CGANGenerator):
             nn.Linear(128, 256),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Dropout(0.3),
-            nn.Linear(256, 4),  # output: (cos_p, de_p, cos_c, en_c)
+            nn.Linear(256, 3),  # output: (cos_p, cos_c, en_c)
             nn.Tanh()
         )
 
@@ -31,7 +45,7 @@ class EmissionEventGenerator(CGANGenerator):
         return load(EmissionEventGenerator, EmissionEventHyperparameters(), model_path, data_stats_path)
 
     def _extract_relevant_info(self, p: Particle, *args) -> list[float]:
-        return [args[0], p.ene]
+        return [args[0][0], p.ene]
 
 
 class EmissionEventCritic(CGANCritic):
@@ -40,7 +54,7 @@ class EmissionEventCritic(CGANCritic):
 
     def define_model(self):
         return nn.Sequential(
-            nn.Linear(6, 128),  # input: (cos_p, de_p, cos_c, en_c, dist_p, en_p)
+            nn.Linear(5, 128),  # input: (cos_p, cos_c, en_c, dist_p, en_p)
             nn.LeakyReLU(0.2, inplace=True),
             nn.Dropout(0.3),
             nn.Linear(128, 256),
@@ -51,7 +65,7 @@ class EmissionEventCritic(CGANCritic):
 
 
 if __name__ == "__main__":
-    dataset = ParticlesDataset(columns_x=["cos_p", "de_p", "cos_c", "en_c"],
+    dataset = ParticlesDataset(columns_x=["cos_p", "en_c", "cos_c"],
                                columns_y=["dist_p", "en_p"],
                                emission_only=True)
     hp = EmissionEventHyperparameters()

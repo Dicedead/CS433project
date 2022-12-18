@@ -91,12 +91,12 @@ class CGANGenerator(nn.Module):
 
     def generate_from_particle(self, p: Particle, *args):
         with torch.no_grad():
+            labels = torch.from_numpy(self.__standardize_y(np.array(self._extract_relevant_info(p, args))))\
+                .float().reshape(1, -1)
             pred = self.__unstandardize_x(
                 self(
-                    self.__hp.generate_noise(1, device="cpu"),
-                    torch.from_numpy(
-                        self.__standardize_y(np.array(self._extract_relevant_info(p, args)))
-                    ).float()
+                    self.__hp.generate_noise(1, device="cpu").reshape(1, -1),
+                    labels
                 )
             )
         return pred.detach().cpu().numpy()
@@ -196,7 +196,8 @@ def train(
                 fake_labels = dataset.y_train[torch.randint(high=len(dataset), size=[hp.batchsize])].to(
                     device="cuda")
                 noise = hp.generate_noise(hp.batchsize)
-                with torch.no_grad(): fake_sample = generator(noise, fake_labels)
+                with torch.no_grad():
+                    fake_sample = generator(noise, fake_labels)
                 critic_output_fake = critic(fake_sample, fake_labels)
                 generator_loss = -critic_output_fake.mean()
 
@@ -229,10 +230,10 @@ def load(model_class: type, hp: CGANHyperparameters, model_path: str, data_stats
     ls = []
     for fn in ["mean_x", "std_x", "mean_y", "std_y"]:
         ls.append(pd.read_pickle(f"{data_stats_path}/{fn}.pkl").values[0])
-    distance_model = model_class(hp, *ls)
-    distance_model.load_state_dict(torch.load(model_path))
-    distance_model.eval()
-    return distance_model
+    model = model_class(hp, *ls)
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+    return model
 
 
 def plot_training_losses(generator_losses: list, critic_losses: list) -> None:
