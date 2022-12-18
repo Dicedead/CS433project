@@ -11,8 +11,8 @@ class DistanceHyperparameters(CGANHyperparameters):
 
     noise_distrib = torch.distributions.Exponential(1)
 
-    def generate_noise(self, n):
-        return self.noise_distrib.sample((n, self.noise_size)).to(device="cuda")
+    def generate_noise(self, n, device="cuda"):
+        return self.noise_distrib.sample((n, self.noise_size)).to(device=device)
 
 
 class DistanceGenerator(CGANGenerator):
@@ -35,6 +35,9 @@ class DistanceGenerator(CGANGenerator):
     @staticmethod
     def load(model_path: str, data_stats_path: str) -> CGANGenerator:
         return load(DistanceGenerator, DistanceHyperparameters(), model_path, data_stats_path)
+
+    def _extract_relevant_info(self, p: Particle, *args) -> list[float]:
+        return [p.ene]
 
 
 class DistanceCritic(CGANCritic):

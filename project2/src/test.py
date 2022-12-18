@@ -53,8 +53,15 @@ def GetEvent(P: Particle):
     return distance, de_p, cos_p, child_particle
 
 
-def predict_distance(p: Particle):
-    return distance_model.generate_from_particle(p)
+def predict_distance(
+        p: Particle,
+        scaling_mean: float = 250,
+        scaling_std: float = 1000 / 70
+):
+    while True:
+        pred = scaling_std * (distance_model.generate_from_particle(p)[0] - scaling_mean)
+        if pred >= 0:
+            return pred
 
 
 def predict_emission(p: Particle, distance: float):
@@ -77,15 +84,12 @@ with open('../model_parameters/water/emission_prediction.sav', "rb") as f:
     clf_logreg = pickle.load(f)
 
 water_dataset = pd.read_pickle("../pickled_data/water_dataset.pkl")
-energy_levels = [i/10 for i in range(1, 61)]
 
-event_emission_model = EmissionEventGenerator()
-event_emission_model.load_state_dict(torch.load('../model_parameters/water/event_prediction.sav'))
-event_emission_model.eval()
+event_emission_model = EmissionEventGenerator.load("../model_parameters/water/emission_prediction.sav",
+                                                   "../model_parameters/water/event_prediction_dataset_stats")
 
-distance_model = DistanceGenerator()
-distance_model.load_state_dict(torch.load('../model_parameters/water/distance_prediction.sav'))
-distance_model.eval()
+distance_model = DistanceGenerator.load("../model_parameters/water/distance_prediction.sav",
+                                        "../model_parameters/water/distance_prediction_dataset_stats")
 
 WX, WY, WZ = 300, 200, 200  # 300x200x200 mm
 NX, NY, NZ = 150, 100, 100  # for 2x2x2 mm voxels

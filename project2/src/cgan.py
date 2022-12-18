@@ -70,8 +70,8 @@ class CGANHyperparameters:
     opti_lr_cri: float = 1e-4
     opti_betas_cri: tuple[float, float] = (0, 0.9)
 
-    def generate_noise(self, n):
-        return torch.randn((n, self.noise_size), device="cuda")
+    def generate_noise(self, n, device="cuda"):
+        return torch.randn((n, self.noise_size), device=device)
 
 
 class CGANGenerator(nn.Module):
@@ -93,7 +93,7 @@ class CGANGenerator(nn.Module):
         with torch.no_grad():
             pred = self.__unstandardize_x(
                 self(
-                    self.__hp.generate_noise(1),
+                    self.__hp.generate_noise(1, device="cpu"),
                     torch.from_numpy(
                         self.__standardize_y(np.array(self._extract_relevant_info(p, args)))
                     ).float()
@@ -115,7 +115,7 @@ class CGANGenerator(nn.Module):
         pass
 
     @abstractmethod
-    def _extract_relevant_info(self, p: Particle, *args):
+    def _extract_relevant_info(self, p: Particle, *args) -> list[float]:
         pass
 
 
@@ -228,7 +228,7 @@ def save(generator: CGANGenerator, data: ParticlesDataset, model_path: str, data
 def load(model_class: type, hp: CGANHyperparameters, model_path: str, data_stats_path: str) -> CGANGenerator:
     ls = []
     for fn in ["mean_x", "std_x", "mean_y", "std_y"]:
-        ls.append(pd.read_pickle(f"{data_stats_path}/{fn}.pkl"))
+        ls.append(pd.read_pickle(f"{data_stats_path}/{fn}.pkl").values[0])
     distance_model = model_class(hp, *ls)
     distance_model.load_state_dict(torch.load(model_path))
     distance_model.eval()

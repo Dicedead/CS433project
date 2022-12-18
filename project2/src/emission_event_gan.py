@@ -26,7 +26,11 @@ class EmissionEventGenerator(CGANGenerator):
             nn.Tanh()
         )
 
-    def _extract_relevant_info(self, p: Particle, *args):
+    @staticmethod
+    def load(model_path: str, data_stats_path: str) -> CGANGenerator:
+        return load(EmissionEventGenerator, EmissionEventHyperparameters(), model_path, data_stats_path)
+
+    def _extract_relevant_info(self, p: Particle, *args) -> list[float]:
         return [args[0], p.ene]
 
 
