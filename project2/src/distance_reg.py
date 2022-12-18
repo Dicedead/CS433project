@@ -7,7 +7,7 @@ water_df = pd.read_pickle("project2/pickled_data/water_dataset.pkl")
 #log(energy) noise and a constant independent variables used for the regression
 x = np.log(water_df["en_p"].values.reshape(-1,1))
 noise = np.random.randn(len(x),1)
-x_newmat = np.c_[ np.ones([len(x),1]),noise, x]
+x_newmat = np.c_[ np.ones([len(x),1]), x]
 #dependent variable log(distance)
 y = np.log(water_df["dist_p"].values)
 
