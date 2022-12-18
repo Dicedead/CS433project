@@ -3,11 +3,16 @@ import math
 import pickle
 import queue
 
+import pandas as pd
+import matplotlib.pyplot as plt
+
 from sklearn.preprocessing import PolynomialFeatures
 
 from data_types import *
 from distance_gan import DistanceGenerator
-from emission_event_gan import *
+from cos_parent_gan import CosParentGenerator
+from ene_child_gan import EnergyChildGenerator
+from cos_child_gan import CosChildGenerator
 
 
 def CoreEvent(max_dist: float, max_dele: float, max_cos: float, prob: float):
@@ -38,11 +43,13 @@ def GetEventTest(P: Particle):
 
 
 def GetEvent(P: Particle):
-    distance = predict_distance(P)[0, 0]
-    emission = predict_emission(P, distance)[0]
+    distance = predict_distance(P)
+    emission = predict_emission(P, distance)
 
     if emission:
-        cos_p, en_c, cos_c = emission_event_prediction(P, distance)[0]
+        en_c = predict_en_c(P, distance)
+        cos_p = predict_cos_p(P, distance, en_c)
+        cos_c = predict_cos_c(P, distance, en_c, cos_p)
         de_p = 0.0005  # TODO de_p prediction very tight gaussian around mean
         child_particle = P.create_child(distance, en_c, cos_c)
 
@@ -62,7 +69,7 @@ def predict_distance(
     while True:
         pred = scaling_std * (distance_model.generate_from_particle(p) - scaling_mean)
         if pred >= 0:
-            return pred
+            return pred[0, 0]
 
 
 def predict_emission(p: Particle, distance: float):
@@ -74,11 +81,19 @@ def predict_emission(p: Particle, distance: float):
         return np.concatenate([x, y, t], axis=1)
 
     z = log_reg_features(distance, p.ene)
-    return clf_logreg.predict(z)
+    return clf_logreg.predict(z)[0]
 
 
-def emission_event_prediction(p: Particle, distance: float):
-    return event_emission_model.generate_from_particle(p, distance)
+def predict_en_c(p: Particle, distance: float):
+    return en_c_model.generate_from_particle(p, distance)[0]
+
+
+def predict_cos_p(p: Particle, distance: float, ene_c: float):
+    return cos_p_model.generate_from_particle(p, distance, ene_c)[0]
+
+
+def predict_cos_c(p: Particle, distance: float, ene_c: float, cos_c: float):
+    return cos_c_model.generate_from_particle(p, distance, ene_c, cos_c)[0]
 
 
 if __name__ == "__main__":
@@ -88,9 +103,12 @@ if __name__ == "__main__":
 
     water_dataset = pd.read_pickle("../pickled_data/water_dataset.pkl")
 
-    event_emission_model = EmissionEventGenerator.load("../model_parameters/water/event_prediction.sav",
-                                                       "../model_parameters/water/event_prediction_dataset_stats")
-
+    cos_p_model = CosParentGenerator.load("../model_parameters/water/cos_p_prediction.sav",
+                                          "../model_parameters/water/cos_p_prediction_dataset_stats")
+    en_c_model = EnergyChildGenerator.load("../model_parameters/water/ene_c_prediction.sav",
+                                           "../model_parameters/water/ene_c_prediction_dataset_stats")
+    cos_c_model = CosChildGenerator.load("../model_parameters/water/cos_c_prediction.sav",
+                                         "../model_parameters/water/cos_c_prediction_dataset_stats")
     distance_model = DistanceGenerator.load("../model_parameters/water/distance_prediction.sav",
                                             "../model_parameters/water/distance_prediction_dataset_stats")
 
