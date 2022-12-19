@@ -68,6 +68,6 @@ if __name__ == "__main__":
     gen = CosChildGenerator(hp, *dataset_to_stats(dataset))
     cri = CosChildCritic()
     gen_losses, cri_losses = train(gen, cri, hp, dataset)
-    save(gen, dataset, "../model_parameters/water/event_prediction.sav",
-         "../model_parameters/water/cos_p_prediction_dataset_stats")
+    save(gen, dataset, "../model_parameters/water/cos_c_prediction.sav",
+         "../model_parameters/water/cos_c_prediction_dataset_stats")
     plot_training_losses(gen_losses, cri_losses)

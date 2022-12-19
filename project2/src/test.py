@@ -11,6 +11,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from data_types import *
 from distance_gan import DistanceGenerator
 from cos_parent_gan import CosParentGenerator
+from emission_prediction import POLY_DEGREE
 from ene_child_gan import EnergyChildGenerator
 from cos_child_gan import CosChildGenerator
 
@@ -50,7 +51,7 @@ def GetEvent(P: Particle):
         en_c = predict_en_c(P, distance)
         cos_p = predict_cos_p(P, distance, en_c)
         cos_c = predict_cos_c(P, distance, en_c, cos_p)
-        de_p = 0.0005  # TODO de_p prediction very tight gaussian around mean
+        de_p = generate_de_p()
         child_particle = P.create_child(distance, en_c, cos_c)
 
     else:
@@ -74,7 +75,7 @@ def predict_distance(
 
 def predict_emission(p: Particle, distance: float):
     def log_reg_features(dist_p, en_p):
-        polyfeat = PolynomialFeatures(degree=3)  # TODO put degree in log reg class attribute
+        polyfeat = PolynomialFeatures(degree=POLY_DEGREE)
         x = np.array([[dist_p, en_p]])
         y = polyfeat.fit_transform(x)
         t = np.exp(-np.array([[en_p, dist_p]]))
@@ -84,8 +85,20 @@ def predict_emission(p: Particle, distance: float):
     return clf_logreg.predict(z)[0]
 
 
-def predict_en_c(p: Particle, distance: float):
-    return en_c_model.generate_from_particle(p, distance)[0]
+def predict_en_c(
+        p: Particle,
+        distance: float,
+        scaling_mean=1.515,
+        scaling_std=5.75 / 0.45,
+        max_iters=15
+):
+    it = 0
+    while it < max_iters:
+        pred = scaling_std * (en_c_model.generate_from_particle(p, distance)[0, 0] - scaling_mean)
+        it += 1
+        if pred >= 0:
+            return pred
+    return 0.
 
 
 def predict_cos_p(p: Particle, distance: float, ene_c: float):
@@ -96,13 +109,15 @@ def predict_cos_c(p: Particle, distance: float, ene_c: float, cos_c: float):
     return cos_c_model.generate_from_particle(p, distance, ene_c, cos_c)[0]
 
 
+def generate_de_p(scale=1 / 100000):
+    return np.abs(np.random.laplace(de_p_mean, de_p_std * scale, 1))
+
+
 if __name__ == "__main__":
 
     with open('../model_parameters/water/emission_prediction.sav', "rb") as f:
         clf_logreg = pickle.load(f)
-
     water_dataset = pd.read_pickle("../pickled_data/water_dataset.pkl")
-
     cos_p_model = CosParentGenerator.load("../model_parameters/water/cos_p_prediction.sav",
                                           "../model_parameters/water/cos_p_prediction_dataset_stats")
     en_c_model = EnergyChildGenerator.load("../model_parameters/water/ene_c_prediction.sav",
@@ -111,6 +126,8 @@ if __name__ == "__main__":
                                          "../model_parameters/water/cos_c_prediction_dataset_stats")
     distance_model = DistanceGenerator.load("../model_parameters/water/distance_prediction.sav",
                                             "../model_parameters/water/distance_prediction_dataset_stats")
+    de_p_mean, de_p_std = pd.read_pickle("../model_parameters/water/de_p_generation_dataset_stats/mean.pkl"), \
+        pd.read_pickle("../model_parameters/water/de_p_generation_dataset_stats/std.pkl")
 
     WX, WY, WZ = 300, 200, 200  # 300x200x200 mm
     NX, NY, NZ = 150, 100, 100  # for 2x2x2 mm voxels

@@ -5,9 +5,9 @@ from cgan import *
 
 @dataclass
 class CosParentHyperparameters(CGANHyperparameters):
-    batchsize: int = 128
+    batchsize: int = 64
     num_epochs: int = 1
-    noise_size: int = 3
+    noise_size: int = 1
     n_critic: int = 5
     gp_lambda: float = 10.
 
@@ -38,7 +38,8 @@ class CosParentGenerator(CGANGenerator):
         return load(CosParentGenerator, CosParentHyperparameters(), model_path, data_stats_path)
 
     def _extract_relevant_info(self, p: Particle, *args) -> list[float]:
-        dist = args[0][0]
+        args = args[0]
+        dist = args[0]
         en_c = args[1]
         return [dist, en_c, p.ene]
 
@@ -67,6 +68,6 @@ if __name__ == "__main__":
     gen = CosParentGenerator(hp, *dataset_to_stats(dataset))
     cri = CosParentCritic()
     gen_losses, cri_losses = train(gen, cri, hp, dataset)
-    save(gen, dataset, "../model_parameters/water/event_prediction.sav",
+    save(gen, dataset, "../model_parameters/water/cos_p_prediction.sav",
          "../model_parameters/water/cos_p_prediction_dataset_stats")
     plot_training_losses(gen_losses, cri_losses)
