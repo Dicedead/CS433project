@@ -101,8 +101,31 @@ def predict_en_c(
     return 0.
 
 
-def predict_cos_p(p: Particle, distance: float, ene_c: float):
-    return cos_p_model.generate_from_particle(p, distance, ene_c)[0]
+def predict_cos_p(
+        p: Particle,
+        distance: float,
+        ene_c: float,
+        ratio=0.01657,
+        cut=0.54343,
+        max_iter=10,
+        eps=1e-6
+):
+    it = pred = 0
+    while it < max_iter:
+        pred = cos_p_model.generate_from_particle(p, distance, ene_c)[0,0]
+        it += 1
+        if cut - ratio <= pred <= cut + ratio:
+            break
+
+    if pred > cut + ratio:
+        pred = cut + eps
+    if pred < cut - ratio:
+        pred = cut - eps
+
+    pred = pred - cut
+    pred = pred * (1/ratio)
+    pred = -pred + np.sign(pred)
+    return pred
 
 
 def predict_cos_c(p: Particle, distance: float, ene_c: float, cos_c: float):

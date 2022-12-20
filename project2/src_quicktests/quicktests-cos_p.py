@@ -18,8 +18,31 @@ ene_cs = emissions['en_c'].values
 cos_p_model = CosParentGenerator.load("../model_parameters/water/cos_p_prediction.sav",
                                           "../model_parameters/water/cos_p_prediction_dataset_stats")
 
-def predict_cos_p(p: Particle, distance: float, ene_c: float):
-    return cos_p_model.generate_from_particle(p, distance, ene_c)[0]
+def predict_cos_p(
+        p: Particle,
+        distance: float,
+        ene_c: float,
+        ratio=0.01657,
+        cut=0.54343,
+        max_iter=10,
+        eps=1e-6
+):
+    it = pred = 0
+    while it < max_iter:
+        pred = cos_p_model.generate_from_particle(p, distance, ene_c)[0,0]
+        it += 1
+        if cut - ratio <= pred <= cut + ratio:
+            break
+
+    if pred > cut + ratio:
+        pred = cut + eps
+    if pred < cut - ratio:
+        pred = cut - eps
+
+    pred = pred - cut
+    pred = pred * (1/ratio)
+    pred = -pred + np.sign(pred)
+    return pred
 
 
 values = np.array([predict_cos_p(Particle(0, 0, 0, 0, 0, 0, energies[x], Type.photon), distances[x], ene_cs[x])

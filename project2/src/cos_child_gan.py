@@ -5,16 +5,16 @@ from cgan import *
 
 @dataclass
 class CosChildHyperparameters(CGANHyperparameters):
-    batchsize: int = 128
+    batchsize: int = 64
     num_epochs: int = 1
-    noise_size: int = 3
+    noise_size: int = 1
     n_critic: int = 5
     gp_lambda: float = 10.
 
-    cos_c_noise = torch.distributions.Exponential(0.5)
+    cos_c_noise = torch.distributions.Cauchy(1, 5) # try (1, 3) or 1,2
 
     def generate_noise(self, n, device="cuda"):
-        return self.cos_c_noise.sample((n, self.noise_size)).to(device=device)
+        return -torch.log(torch.abs(self.cos_c_noise.sample((n, self.noise_size)))).to(device=device)
 
 
 class CosChildGenerator(CGANGenerator):
@@ -30,7 +30,7 @@ class CosChildGenerator(CGANGenerator):
             nn.LeakyReLU(0.2, inplace=True),
             nn.Dropout(0.3),
             nn.Linear(256, 1),  # output: (cos_c)
-            nn.Tanh()
+            nn.LogSigmoid()
         )
 
     @staticmethod
@@ -38,7 +38,8 @@ class CosChildGenerator(CGANGenerator):
         return load(CosChildGenerator, CosChildHyperparameters(), model_path, data_stats_path)
 
     def _extract_relevant_info(self, p: Particle, *args) -> list[float]:
-        dist = args[0][0]
+        args = args[0]
+        dist = args[0]
         en_c = args[1]
         cos_p = args[2]
         return [dist, en_c, cos_p, p.ene]
