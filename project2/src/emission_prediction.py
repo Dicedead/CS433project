@@ -9,7 +9,6 @@ from sklearn.preprocessing import PolynomialFeatures
 
 POLY_DEGREE = 3
 
-
 def log_reg_features(df):
     polyfeat = PolynomialFeatures(degree=POLY_DEGREE)
     return np.concatenate([df[["dist_p", "en_p"]],

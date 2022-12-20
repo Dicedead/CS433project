@@ -11,7 +11,7 @@ class CosChildHyperparameters(CGANHyperparameters):
     n_critic: int = 5
     gp_lambda: float = 10.
 
-    cos_c_noise = torch.distributions.Cauchy(1, 5) # try (1, 3) or 1,2
+    cos_c_noise = torch.distributions.Cauchy(1, 2) # try (1, 3) or 1,2
 
     def generate_noise(self, n, device="cuda"):
         return -torch.log(torch.abs(self.cos_c_noise.sample((n, self.noise_size)))).to(device=device)

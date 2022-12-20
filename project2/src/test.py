@@ -14,6 +14,7 @@ from cos_parent_gan import CosParentGenerator
 from emission_prediction import POLY_DEGREE
 from ene_child_gan import EnergyChildGenerator
 from cos_child_gan import CosChildGenerator
+from no_emission_cos_p_gan import NoEmissionCosParentGenerator
 
 
 def CoreEvent(max_dist: float, max_dele: float, max_cos: float, prob: float):
@@ -56,7 +57,7 @@ def GetEvent(P: Particle):
 
     else:
         de_p = 0.
-        cos_p = 1  # TODO no_emission_event_prediction(P, distance)
+        cos_p = predict_no_emission_cos_p(P, distance)
         child_particle = None
 
     return distance, de_p, cos_p, child_particle
@@ -128,11 +129,30 @@ def predict_cos_p(
     return pred
 
 
-def predict_cos_c(p: Particle, distance: float, ene_c: float, cos_c: float):
-    return cos_c_model.generate_from_particle(p, distance, ene_c, cos_c)[0]
+def predict_no_emission_cos_p(
+        p : Particle,
+        distance: float,
+        scale=1/80
+):
+    return 1-np.abs(np.random.laplace(0, np.minimum(scale, 1/(p.ene * distance))))
 
 
-def generate_de_p(scale=1 / 100000):
+def predict_cos_c(
+        p: Particle,
+        distance: float,
+        ene_c: float,
+        cos_p: float,
+        loc=0.64,
+        scale=0.6856
+):
+    pred = cos_c_model.generate_from_particle(p, distance, ene_c, cos_p)[0, 0]
+    scale -= loc
+    pred -= loc
+    pred *= 1/scale
+    return np.clip(pred, -1, 1)
+
+
+def generate_de_p(scale=1/100000):
     return np.abs(np.random.laplace(de_p_mean, de_p_std * scale, 1))
 
 
@@ -149,6 +169,8 @@ if __name__ == "__main__":
                                          "../model_parameters/water/cos_c_prediction_dataset_stats")
     distance_model = DistanceGenerator.load("../model_parameters/water/distance_prediction.sav",
                                             "../model_parameters/water/distance_prediction_dataset_stats")
+    no_em_model = NoEmissionCosParentGenerator.load("../model_parameters/water/no_em_cos_p_prediction.sav",
+                                                    "../model_parameters/water/no_em_cos_p_prediction_dataset_stats")
     de_p_mean, de_p_std = pd.read_pickle("../model_parameters/water/de_p_generation_dataset_stats/mean.pkl"), \
         pd.read_pickle("../model_parameters/water/de_p_generation_dataset_stats/std.pkl")
 

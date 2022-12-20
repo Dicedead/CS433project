@@ -15,17 +15,36 @@ from sklearn.model_selection import train_test_split
 
 
 class ParticlesDataset(Dataset):
+    """
+    Torch Dataset subclass, specialized for a Particles dataset
+    """
 
     def __init__(self,
                  columns_x: list[str],
                  columns_y: list[str],
                  emission_only: bool,
+                 no_emission_only=False,
                  path="../pickled_data/water_dataset.pkl",
                  validation_size=0.3
                  ):
+        """
+        Constructor for ParticlesDataset.
+
+        :param columns_x: data columns in given dataset
+        :param columns_y: label columns
+        :param emission_only: only keep events with emission
+        :param no_emission_only: bool
+        :param path: str, path to pickle of dataset
+        :param validation_size: float between 0 and 1: fraction
+                                of data to leave for validation
+        """
         dataset = pd.read_pickle(path)
+
         if emission_only:
             dataset = dataset[dataset["emission"] == 1]
+
+        if no_emission_only:
+            dataset = dataset[dataset["emission"] == 0]
 
         x_scaler = StandardScaler()
         y_scaler = StandardScaler()
@@ -58,6 +77,11 @@ class ParticlesDataset(Dataset):
 
 @dataclass
 class CGANHyperparameters:
+
+    """
+    Container abstract class for cGAN hyperparameters.
+    """
+
     batchsize: int
     num_epochs: int
     noise_size: int
@@ -75,6 +99,11 @@ class CGANHyperparameters:
 
 
 class CGANGenerator(nn.Module):
+    """
+    Abstract cGAN generator class.
+    Subclasses should implement define_model and _extract_relevant_info methods, see their documentations.
+    """
+
     def __init__(self, hp: CGANHyperparameters, mean_x: float, std_x: float, mean_y: float, std_y: float):
         super().__init__()
         self.__noise_size = hp.noise_size
@@ -90,9 +119,15 @@ class CGANGenerator(nn.Module):
         return out
 
     def generate_from_particle(self, p: Particle, *args):
+        """
+        Generate sample from a particle and possibly more information in args.
+        Assumes non-standardized inputs.
+        """
         with torch.no_grad():
+
             labels = torch.from_numpy(self.__standardize_y(np.array(self._extract_relevant_info(p, args))))\
                 .float().reshape(1, -1)
+
             pred = self.__unstandardize_x(
                 self(
                     self.__hp.generate_noise(1, device="cpu").reshape(1, -1),
@@ -112,14 +147,24 @@ class CGANGenerator(nn.Module):
 
     @abstractmethod
     def define_model(self):
+        """
+        :return: Define and return network structure.
+        """
         pass
 
     @abstractmethod
     def _extract_relevant_info(self, p: Particle, *args) -> list[float]:
+        """
+        :return: Labels corresponding to given particle with additional information
+        """
         pass
 
 
 class CGANCritic(nn.Module):
+    """
+    Abstract cGAN discriminator class.
+    Subclasses should implement define_model.
+    """
     def __init__(self):
         super().__init__()
         self.model = self.define_model()
@@ -146,6 +191,7 @@ def train(
         seed=1,
         verbose=True
 ):
+
     torch.set_num_threads(num_threads)
     torch.manual_seed(seed)
 

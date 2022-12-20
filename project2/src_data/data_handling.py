@@ -12,6 +12,7 @@ def material_dataset_txt_to_json(
         output_folder=None,
         verbose=True
 ):
+
     if input_folder is None:
         input_folder = "../data/data_" + material + "/"
 
@@ -93,6 +94,9 @@ def from_zip_to_pickle(
         material: str,
         verbose=True,
 ):
+    """
+    Load all data from file in data/data_<material> and create pickle out of it.
+    """
     material_dataset_txt_to_json(material, verbose=verbose)
     material_dataset = material_dataset_jsontodf(material, verbose=verbose, two_returns=False)
     material_dataset.to_pickle(f"../pickled_data/{material}_dataset.pkl")

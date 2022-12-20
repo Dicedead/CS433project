@@ -20,12 +20,24 @@ cos_ps = emissions['cos_p'].values
 cos_c_model = CosChildGenerator.load("../model_parameters/water/cos_c_prediction.sav",
                                           "../model_parameters/water/cos_c_prediction_dataset_stats")
 
-def predict_cos_c(p: Particle, distance: float, ene_c: float, cos_p: float):
-    return cos_c_model.generate_from_particle(p, distance, ene_c, cos_p)[0]
+def predict_cos_c(
+        p: Particle,
+        distance: float,
+        ene_c: float,
+        cos_p: float,
+        loc=0.64,
+        scale=0.6856
+):
+    pred = cos_c_model.generate_from_particle(p, distance, ene_c, cos_p)[0, 0]
+    scale -= loc
+    pred -= loc
+    pred *= 1/scale
+    return np.clip(pred, -1, 1)
 
 
 values = np.array([predict_cos_c(Particle(0, 0, 0, 0, 0, 0, energies[x], Type.photon), distances[x], ene_cs[x], cos_ps[x])
                    for x in range(len(energies))])
+print(values.max())
 sns.histplot(values)
 
 # sns.histplot(emissions['cos_c'])

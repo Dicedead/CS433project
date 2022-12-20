@@ -6,10 +6,10 @@ class NoEmissionCosParentHyperparameters(CGANHyperparameters):
     batchsize: int = 64
     num_epochs: int = 1
     noise_size: int = 1
-    n_critic: int = 5
+    n_critic: int = 1
     gp_lambda: float = 10.
 
-    no_em_cos_p_noise = torch.distributions.Pareto(1., 3.)
+    no_em_cos_p_noise = torch.distributions.Laplace(1, 0.00000000002)
 
     def generate_noise(self, n, device="cuda"):
         return self.no_em_cos_p_noise.sample((n, self.noise_size)).to(device=device)
@@ -22,13 +22,13 @@ class NoEmissionCosParentGenerator(CGANGenerator):
     def define_model(self):
         return nn.Sequential(
             nn.Linear(self._get_noise_size() + 2, 128),  # input: (noise, dist_p, en_p)
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.SELU(inplace=True),
             nn.Dropout(0.5),
             nn.Linear(128, 256),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.SELU(inplace=True),
             nn.Dropout(0.3),
             nn.Linear(256, 1),  # output: (cos_p)
-            nn.Tanh()
+            nn.Sigmoid()
         )
 
     @staticmethod
@@ -47,10 +47,10 @@ class NoEmissionCosParentCritic(CGANCritic):
     def define_model(self):
         return nn.Sequential(
             nn.Linear(3, 128),  # input: (cos_p, dist_p, en_p)
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.SELU(inplace=True),
             nn.Dropout(0.3),
             nn.Linear(128, 256),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.SELU(inplace=True),
             nn.Dropout(0.25),
             nn.Linear(256, 1)
         )
@@ -59,7 +59,8 @@ class NoEmissionCosParentCritic(CGANCritic):
 if __name__ == "__main__":
     dataset = ParticlesDataset(columns_x=["cos_p"],
                                columns_y=["dist_p", "en_p"],
-                               emission_only=True)
+                               emission_only=False,
+                               no_emission_only=True)
     hp = NoEmissionCosParentHyperparameters()
     gen = NoEmissionCosParentGenerator(hp, *dataset_to_stats(dataset))
     cri = NoEmissionCosParentCritic()
