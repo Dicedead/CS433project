@@ -14,7 +14,6 @@ from cos_parent_gan import CosParentGenerator
 from emission_prediction import POLY_DEGREE
 from ene_child_gan import EnergyChildGenerator
 from cos_child_gan import CosChildGenerator
-from no_emission_cos_p_gan import NoEmissionCosParentGenerator
 
 
 def CoreEvent(max_dist: float, max_dele: float, max_cos: float, prob: float):
@@ -142,18 +141,17 @@ def predict_cos_c(
         distance: float,
         ene_c: float,
         cos_p: float,
-        loc=0.64,
-        scale=0.6856
+        loc=0.7035,
+        scale=1 / 0.03
 ):
-    pred = cos_c_model.generate_from_particle(p, distance, ene_c, cos_p)[0, 0]
-    scale -= loc
-    pred -= loc
-    pred *= 1/scale
+    pred = cos_c_model.generate_from_particle(p, distance, ene_c, cos_p)[0, 0] - loc
+    pred = abs(pred) * scale
+    pred = 1 - pred
     return np.clip(pred, -1, 1)
 
 
 def generate_de_p(scale=1/100000):
-    return np.abs(np.random.laplace(de_p_mean, de_p_std * scale, 1))
+    return np.abs(np.random.laplace(de_p_mean, de_p_std * scale, 1))[0]
 
 
 if __name__ == "__main__":
@@ -169,15 +167,13 @@ if __name__ == "__main__":
                                          "../model_parameters/water/cos_c_prediction_dataset_stats")
     distance_model = DistanceGenerator.load("../model_parameters/water/distance_prediction.sav",
                                             "../model_parameters/water/distance_prediction_dataset_stats")
-    no_em_model = NoEmissionCosParentGenerator.load("../model_parameters/water/no_em_cos_p_prediction.sav",
-                                                    "../model_parameters/water/no_em_cos_p_prediction_dataset_stats")
-    de_p_mean, de_p_std = pd.read_pickle("../model_parameters/water/de_p_generation_dataset_stats/mean.pkl"), \
-        pd.read_pickle("../model_parameters/water/de_p_generation_dataset_stats/std.pkl")
+    de_p_mean, de_p_std = pd.read_pickle("../model_parameters/water/de_p_generation_dataset_stats/mean.pkl")["de_p"], \
+        pd.read_pickle("../model_parameters/water/de_p_generation_dataset_stats/std.pkl")["de_p"]
 
     WX, WY, WZ = 300, 200, 200  # 300x200x200 mm
     NX, NY, NZ = 150, 100, 100  # for 2x2x2 mm voxels
     A = Arena(WX, WY, WZ, NX, NY, NZ)
-    NMC = 1000  # number of particles we want to simulate
+    NMC = 100000  # number of particles we want to simulate
     EMAX = 6.0  # maximum energy of particles
 
     ToSimulate = queue.Queue()  # the queue of particles
