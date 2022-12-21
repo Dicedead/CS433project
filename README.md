@@ -1,4 +1,5 @@
 # Modelling Energetic Particles in Matter
+![Compton effect](https://github.com/Dicedead/CS433project/raw/main/project2/plots/emission_drawing.png)
 
 ## Reproducibility
 Get the data from the [drive](https://drive.google.com/drive/u/1/folders/1Zsz5ZGmZoPcBf4f30cwVOi3FtWQaU5GS?sort=13&direction=a). The easiest is to download the pickled ```water_dataset.pkl``` and to place it in ```project2/pickled_data```. Then, run ```test.py``` located in ```project2/src```. For quick results, we recommend setting the number of particles ```NMC``` to 100,000 or less.
