@@ -85,7 +85,7 @@ if __name__ == "__main__":
     WX, WY, WZ = 300, 200, 200  # 300x200x200 mm
     NX, NY, NZ = 150, 100, 100  # for 2x2x2 mm voxels
     A = Arena(WX, WY, WZ, NX, NY, NZ)
-    NMC = 100000  # number of particles we want to simulate
+    NMC = 1000000  # number of particles we want to simulate
     EMAX = 6.0  # maximum energy of particles
 
     ToSimulate = queue.Queue()  # the queue of particles
