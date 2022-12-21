@@ -44,9 +44,9 @@ def GetEventTest(P: Particle):
         return CoreEvent(1.0, 0.2, 0.1, 0.75)
 
 
-def GetEvent(P: Particle, device="cuda"):
+def GetEvent(P: Particle, device="cpu"):
     for m in [distance_model, en_c_model, cos_p_model, cos_c_model]:
-        m.to(device=device)
+        m.to(device)
 
     distance = distance_model.predict(P, device=device)
     emission = emission_prediction.predict_emission(clf_logreg, P, distance)
