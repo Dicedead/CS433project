@@ -77,7 +77,6 @@ class ParticlesDataset(Dataset):
 
 @dataclass
 class CGANHyperparameters:
-
     """
     Container abstract class for cGAN hyperparameters.
     """
@@ -101,7 +100,8 @@ class CGANHyperparameters:
 class CGANGenerator(nn.Module):
     """
     Abstract cGAN generator class.
-    Subclasses should implement define_model and _extract_relevant_info methods, see their documentations.
+    Subclasses must implement define_model and _extract_relevant_info methods, see their documentations.
+    Subclasses should also implement a predict method to generate properly scaled sample.
     """
 
     def __init__(self, hp: CGANHyperparameters, mean_x: float, std_x: float, mean_y: float, std_y: float):
@@ -124,9 +124,8 @@ class CGANGenerator(nn.Module):
         Assumes non-standardized inputs and does not
         """
         with torch.no_grad():
-
-            labels = torch.from_numpy(self.__standardize_y(np.array(self._extract_relevant_info(p, args))))\
-                .float().reshape(1, -1)
+            labels = torch.from_numpy(self.__standardize_y(np.array(self._extract_relevant_info(p, args)))) \
+                .float().reshape(1, -1).to(device=device)
 
             pred = self.__unstandardize_x(
                 self(
@@ -134,8 +133,7 @@ class CGANGenerator(nn.Module):
                     labels
                 )
             )
-        if device == "cpu":
-            pred = pred.detach().cpu().numpy()
+        pred = torch_to_np(pred)
         return pred
 
     def __standardize_y(self, arr: np.ndarray):
@@ -161,19 +159,13 @@ class CGANGenerator(nn.Module):
         """
         pass
 
-    @abstractmethod
-    def predict(self, p: Particle, *args):
-        """
-        :return: Generate appropriately scaled and distributed sample.
-        """
-        pass
-
 
 class CGANCritic(nn.Module):
     """
     Abstract cGAN discriminator class.
     Subclasses should implement define_model.
     """
+
     def __init__(self):
         super().__init__()
         self.model = self.define_model()
@@ -200,7 +192,6 @@ def train(
         seed=1,
         verbose=True
 ):
-
     torch.set_num_threads(num_threads)
     torch.manual_seed(seed)
 
@@ -272,6 +263,10 @@ def train(
             iters += 1
 
     return generator_losses, critic_losses
+
+
+def torch_to_np(t: torch.Tensor) -> np.ndarray:
+    return t.cpu().detach().numpy()
 
 
 def save(generator: CGANGenerator, data: ParticlesDataset, model_path: str, data_stats_path: str) -> None:

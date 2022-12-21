@@ -43,11 +43,12 @@ class CosParentGenerator(CGANGenerator):
             self,
             p: Particle,
             distance: float,
-            ene_c: float
+            ene_c: float,
+            device="cpu"
     ):
         it = pred = 0
         while it < self.__hp.max_iter:
-            pred = self.generate_from_particle(p, distance, ene_c)[0, 0]
+            pred = self.generate_from_particle(p, distance, ene_c, device=device)[0, 0]
             it += 1
             if self.__hp.cut - self.__hp.ratio <= pred <= self.__hp.cut + self.__hp.ratio:
                 break

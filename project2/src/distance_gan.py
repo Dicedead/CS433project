@@ -1,3 +1,5 @@
+import torch
+
 from cgan import *
 
 
@@ -37,11 +39,12 @@ class DistanceGenerator(CGANGenerator):
             nn.Tanh()
         )
 
-    def predict(self, p: Particle):
+    def predict(self, p: Particle, device="cpu"):
         while True:
-            pred = self.__hp.scaling_std * (self.generate_from_particle(p) - self.__hp.scaling_mean)
+            raw = self.generate_from_particle(p, device=device)[0, 0]
+            pred = self.__hp.scaling_std * (raw - self.__hp.scaling_mean)
             if pred >= 0:
-                return pred[0, 0]
+                return pred
 
     @staticmethod
     def load(model_path: str, data_stats_path: str) -> CGANGenerator:

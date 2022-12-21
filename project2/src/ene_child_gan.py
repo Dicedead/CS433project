@@ -41,11 +41,13 @@ class EnergyChildGenerator(CGANGenerator):
     def predict(
             self,
             p: Particle,
-            distance: float
+            distance: float,
+            device="cpu"
     ):
         it = 0
         while it < self.__hp.max_iters:
-            pred = self.__hp.scaling_std * (self.generate_from_particle(p, distance)[0, 0] - self.__hp.scaling_mean)
+            raw = self.generate_from_particle(p, distance, device=device)[0, 0]
+            pred = self.__hp.scaling_std * (raw - self.__hp.scaling_mean)
             it += 1
             if pred >= 0:
                 return pred

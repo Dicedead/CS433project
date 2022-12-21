@@ -44,14 +44,17 @@ def GetEventTest(P: Particle):
         return CoreEvent(1.0, 0.2, 0.1, 0.75)
 
 
-def GetEvent(P: Particle):
-    distance = distance_model.predict(P)
+def GetEvent(P: Particle, device="cuda"):
+    for m in [distance_model, en_c_model, cos_p_model, cos_c_model]:
+        m.to(device=device)
+
+    distance = distance_model.predict(P, device=device)
     emission = emission_prediction.predict_emission(clf_logreg, P, distance)
 
     if emission:
-        en_c = en_c_model.predict(P, distance)
-        cos_p = cos_p_model.predict(P, distance, en_c)
-        cos_c = cos_c_model.predict(P, distance, en_c, cos_p)
+        en_c = en_c_model.predict(P, distance, device=device)
+        cos_p = cos_p_model.predict(P, distance, en_c, device=device)
+        cos_c = cos_c_model.predict(P, distance, en_c, cos_p, device=device)
         de_p = generate_de_p(de_p_mean, de_p_std)
         child_particle = P.create_child(distance, en_c, cos_c)
 

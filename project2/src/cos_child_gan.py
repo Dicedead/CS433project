@@ -1,3 +1,5 @@
+import torch
+
 from cgan import *
 
 
@@ -40,12 +42,14 @@ class CosChildGenerator(CGANGenerator):
             p: Particle,
             distance: float,
             ene_c: float,
-            cos_p: float
+            cos_p: float,
+            device="cpu"
     ):
-        pred = self.generate_from_particle(p, distance, ene_c, cos_p)[0, 0] - self.__hp.loc
+        pred = self.generate_from_particle(p, distance, ene_c, cos_p, device=device)[0, 0] - self.__hp.loc
         pred = abs(pred) * self.__hp.scale
         pred = 1 - pred
         return np.clip(pred, -1, 1)
+
 
     @staticmethod
     def load(model_path: str, data_stats_path: str) -> CGANGenerator:

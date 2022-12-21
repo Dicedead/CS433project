@@ -11,7 +11,15 @@ from data_types import Particle
 
 __POLY_DEGREE = 3
 
+
 def predict_emission(clf: LogisticRegression, p: Particle, distance: float):
+    """
+    Applies given logistic regression model to particle and distance. Outputs boolean output:
+        1 is for the presence of an emitted particle,
+        0 is for its absence.
+    Note: runs on CPU, due to too much overhead for GPU.
+    """
+
     def __log_reg_features(dist_p, en_p):  # copied for efficiency purposes
         polyfeat = PolynomialFeatures(degree=__POLY_DEGREE)
         x = np.array([[dist_p, en_p]])
@@ -21,6 +29,7 @@ def predict_emission(clf: LogisticRegression, p: Particle, distance: float):
 
     z = __log_reg_features(distance, p.ene)
     return clf.predict(z)[0]
+
 
 def log_reg_features(df):
     polyfeat = PolynomialFeatures(degree=__POLY_DEGREE)
