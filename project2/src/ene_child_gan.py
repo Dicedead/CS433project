@@ -13,6 +13,10 @@ class EnergyChildHyperparameters(CGANHyperparameters):
 
     en_c_noise = torch.distributions.Exponential(1.)
 
+    scaling_mean = 1.515
+    scaling_std = 5.75 / 0.45
+    max_iters = 15
+
     def generate_noise(self, n, device="cuda"):
         return self.en_c_noise.sample((n, self.noise_size)).to(device=device)
 
@@ -20,6 +24,7 @@ class EnergyChildHyperparameters(CGANHyperparameters):
 class EnergyChildGenerator(CGANGenerator):
     def __init__(self, hp: EnergyChildHyperparameters, mean_x: float, std_x: float, mean_y: float, std_y: float):
         super().__init__(hp, mean_x, std_x, mean_y, std_y)
+        self.__hp = hp
 
     def define_model(self):
         return nn.Sequential(
@@ -32,6 +37,19 @@ class EnergyChildGenerator(CGANGenerator):
             nn.Linear(256, 1),  # output: (en_c)
             nn.Tanh()
         )
+
+    def predict(
+            self,
+            p: Particle,
+            distance: float
+    ):
+        it = 0
+        while it < self.__hp.max_iters:
+            pred = self.__hp.scaling_std * (self.generate_from_particle(p, distance)[0, 0] - self.__hp.scaling_mean)
+            it += 1
+            if pred >= 0:
+                return pred
+        return 0.
 
     @staticmethod
     def load(model_path: str, data_stats_path: str) -> CGANGenerator:

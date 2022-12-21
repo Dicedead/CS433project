@@ -7,10 +7,23 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PolynomialFeatures
 
-POLY_DEGREE = 3
+from data_types import Particle
+
+__POLY_DEGREE = 3
+
+def predict_emission(clf: LogisticRegression, p: Particle, distance: float):
+    def __log_reg_features(dist_p, en_p):  # copied for efficiency purposes
+        polyfeat = PolynomialFeatures(degree=__POLY_DEGREE)
+        x = np.array([[dist_p, en_p]])
+        y = polyfeat.fit_transform(x)
+        t = np.exp(-np.array([[en_p, dist_p]]))
+        return np.concatenate([x, y, t], axis=1)
+
+    z = __log_reg_features(distance, p.ene)
+    return clf.predict(z)[0]
 
 def log_reg_features(df):
-    polyfeat = PolynomialFeatures(degree=POLY_DEGREE)
+    polyfeat = PolynomialFeatures(degree=__POLY_DEGREE)
     return np.concatenate([df[["dist_p", "en_p"]],
                            polyfeat.fit_transform(df[["dist_p", "en_p"]]),
                            df[["en_p"]].apply(lambda x: np.exp(-x)),

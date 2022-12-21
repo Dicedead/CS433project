@@ -118,10 +118,10 @@ class CGANGenerator(nn.Module):
         out = self.model(torch.cat([noise, labels], dim=-1))
         return out
 
-    def generate_from_particle(self, p: Particle, *args):
+    def generate_from_particle(self, p: Particle, *args, device="cpu"):
         """
-        Generate sample from a particle and possibly more information in args.
-        Assumes non-standardized inputs.
+        Generate raw sample from a particle and possibly more information in args.
+        Assumes non-standardized inputs and does not
         """
         with torch.no_grad():
 
@@ -130,11 +130,13 @@ class CGANGenerator(nn.Module):
 
             pred = self.__unstandardize_x(
                 self(
-                    self.__hp.generate_noise(1, device="cpu").reshape(1, -1),
+                    self.__hp.generate_noise(1, device=device).reshape(1, -1),
                     labels
                 )
             )
-        return pred.detach().cpu().numpy()
+        if device == "cpu":
+            pred = pred.detach().cpu().numpy()
+        return pred
 
     def __standardize_y(self, arr: np.ndarray):
         return (arr - self.__mean_y) / self.__std_y
@@ -156,6 +158,13 @@ class CGANGenerator(nn.Module):
     def _extract_relevant_info(self, p: Particle, *args) -> list[float]:
         """
         :return: Labels corresponding to given particle with additional information
+        """
+        pass
+
+    @abstractmethod
+    def predict(self, p: Particle, *args):
+        """
+        :return: Generate appropriately scaled and distributed sample.
         """
         pass
 

@@ -11,6 +11,9 @@ class DistanceHyperparameters(CGANHyperparameters):
 
     noise_distrib = torch.distributions.Exponential(1)
 
+    scaling_mean = 250
+    scaling_std = 1000 / 70
+
     def generate_noise(self, n, device="cuda"):
         return self.noise_distrib.sample((n, self.noise_size)).to(device=device)
 
@@ -19,6 +22,8 @@ class DistanceGenerator(CGANGenerator):
     def __init__(self, hp: DistanceHyperparameters, mean_x: float, std_x: float, mean_y: float, std_y: float):
         super().__init__(hp, mean_x, std_x, mean_y, std_y)
         self.__hp = hp
+        self.__scaling_mean = hp.scaling_mean
+        self.__scaling_std = hp.scaling_std
 
     def define_model(self):
         return nn.Sequential(
@@ -31,6 +36,12 @@ class DistanceGenerator(CGANGenerator):
             nn.Linear(128, 1),
             nn.Tanh()
         )
+
+    def predict(self, p: Particle):
+        while True:
+            pred = self.__hp.scaling_std * (self.generate_from_particle(p) - self.__hp.scaling_mean)
+            if pred >= 0:
+                return pred[0, 0]
 
     @staticmethod
     def load(model_path: str, data_stats_path: str) -> CGANGenerator:

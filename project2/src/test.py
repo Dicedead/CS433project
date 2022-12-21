@@ -6,12 +6,13 @@ import queue
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from sklearn.preprocessing import PolynomialFeatures
+import emission_prediction
+import no_emission_cos_p_prediction
 
 from data_types import *
+from de_p_generation import generate_de_p
 from distance_gan import DistanceGenerator
 from cos_parent_gan import CosParentGenerator
-from emission_prediction import POLY_DEGREE
 from ene_child_gan import EnergyChildGenerator
 from cos_child_gan import CosChildGenerator
 
@@ -44,114 +45,22 @@ def GetEventTest(P: Particle):
 
 
 def GetEvent(P: Particle):
-    distance = predict_distance(P)
-    emission = predict_emission(P, distance)
+    distance = distance_model.predict(P)
+    emission = emission_prediction.predict_emission(clf_logreg, P, distance)
 
     if emission:
-        en_c = predict_en_c(P, distance)
-        cos_p = predict_cos_p(P, distance, en_c)
-        cos_c = predict_cos_c(P, distance, en_c, cos_p)
-        de_p = generate_de_p()
+        en_c = en_c_model.predict(P, distance)
+        cos_p = cos_p_model.predict(P, distance, en_c)
+        cos_c = cos_c_model.predict(P, distance, en_c, cos_p)
+        de_p = generate_de_p(de_p_mean, de_p_std)
         child_particle = P.create_child(distance, en_c, cos_c)
 
     else:
         de_p = 0.
-        cos_p = predict_no_emission_cos_p(P, distance)
+        cos_p = no_emission_cos_p_prediction.predict_no_emission_cos_p(P, distance)
         child_particle = None
 
     return distance, de_p, cos_p, child_particle
-
-
-def predict_distance(
-        p: Particle,
-        scaling_mean: float = 250,
-        scaling_std: float = 1000 / 70
-):
-    while True:
-        pred = scaling_std * (distance_model.generate_from_particle(p) - scaling_mean)
-        if pred >= 0:
-            return pred[0, 0]
-
-
-def predict_emission(p: Particle, distance: float):
-    def log_reg_features(dist_p, en_p):
-        polyfeat = PolynomialFeatures(degree=POLY_DEGREE)
-        x = np.array([[dist_p, en_p]])
-        y = polyfeat.fit_transform(x)
-        t = np.exp(-np.array([[en_p, dist_p]]))
-        return np.concatenate([x, y, t], axis=1)
-
-    z = log_reg_features(distance, p.ene)
-    return clf_logreg.predict(z)[0]
-
-
-def predict_en_c(
-        p: Particle,
-        distance: float,
-        scaling_mean=1.515,
-        scaling_std=5.75 / 0.45,
-        max_iters=15
-):
-    it = 0
-    while it < max_iters:
-        pred = scaling_std * (en_c_model.generate_from_particle(p, distance)[0, 0] - scaling_mean)
-        it += 1
-        if pred >= 0:
-            return pred
-    return 0.
-
-
-def predict_cos_p(
-        p: Particle,
-        distance: float,
-        ene_c: float,
-        ratio=0.01657,
-        cut=0.54343,
-        max_iter=10,
-        eps=1e-6
-):
-    it = pred = 0
-    while it < max_iter:
-        pred = cos_p_model.generate_from_particle(p, distance, ene_c)[0,0]
-        it += 1
-        if cut - ratio <= pred <= cut + ratio:
-            break
-
-    if pred > cut + ratio:
-        pred = cut + eps
-    if pred < cut - ratio:
-        pred = cut - eps
-
-    pred = pred - cut
-    pred = pred * (1/ratio)
-    pred = -pred + np.sign(pred)
-    return pred
-
-
-def predict_no_emission_cos_p(
-        p : Particle,
-        distance: float,
-        scale=1/80
-):
-    return 1-np.abs(np.random.laplace(0, np.minimum(scale, 1/(p.ene * distance))))
-
-
-def predict_cos_c(
-        p: Particle,
-        distance: float,
-        ene_c: float,
-        cos_p: float,
-        loc=0.7035,
-        scale=1 / 0.03
-):
-    pred = cos_c_model.generate_from_particle(p, distance, ene_c, cos_p)[0, 0] - loc
-    pred = abs(pred) * scale
-    pred = 1 - pred
-    return np.clip(pred, -1, 1)
-
-
-def generate_de_p(scale=1/100000):
-    return np.abs(np.random.laplace(de_p_mean, de_p_std * scale, 1))[0]
 
 
 if __name__ == "__main__":

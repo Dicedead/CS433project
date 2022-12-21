@@ -13,6 +13,11 @@ class CosParentHyperparameters(CGANHyperparameters):
 
     cos_p_noise = torch.distributions.Kumaraswamy(0.5, 0.5)
 
+    ratio = 0.01657
+    cut = 0.54343
+    max_iter = 10
+    eps = 1e-6
+
     def generate_noise(self, n, device="cuda"):
         return self.cos_p_noise.sample((n, self.noise_size)).to(device=device)
 
@@ -20,6 +25,7 @@ class CosParentHyperparameters(CGANHyperparameters):
 class CosParentGenerator(CGANGenerator):
     def __init__(self, hp: CosParentHyperparameters, mean_x: float, std_x: float, mean_y: float, std_y: float):
         super().__init__(hp, mean_x, std_x, mean_y, std_y)
+        self.__hp = hp
 
     def define_model(self):
         return nn.Sequential(
@@ -32,6 +38,29 @@ class CosParentGenerator(CGANGenerator):
             nn.Linear(256, 1),  # output: (cos_p)
             nn.Tanh()
         )
+
+    def predict(
+            self,
+            p: Particle,
+            distance: float,
+            ene_c: float
+    ):
+        it = pred = 0
+        while it < self.__hp.max_iter:
+            pred = self.generate_from_particle(p, distance, ene_c)[0, 0]
+            it += 1
+            if self.__hp.cut - self.__hp.ratio <= pred <= self.__hp.cut + self.__hp.ratio:
+                break
+
+        if pred > self.__hp.cut + self.__hp.ratio:
+            pred = self.__hp.cut + self.__hp.eps
+        if pred < self.__hp.cut - self.__hp.ratio:
+            pred = self.__hp.cut - self.__hp.eps
+
+        pred = pred - self.__hp.cut
+        pred = pred * (1 / self.__hp.ratio)
+        pred = -pred + np.sign(pred)
+        return pred
 
     @staticmethod
     def load(model_path: str, data_stats_path: str) -> CGANGenerator:

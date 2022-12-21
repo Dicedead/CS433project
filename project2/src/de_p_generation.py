@@ -1,4 +1,14 @@
+import numpy as np
 import pandas as pd
+
+
+def generate_de_p(
+        de_p_mean: float,
+        de_p_std: float,
+        scale=1 / 100000
+):
+    return np.abs(np.random.laplace(de_p_mean, de_p_std * scale, 1))[0]
+
 
 if __name__ == "__main__":
     water_dataset = pd.read_pickle("../pickled_data/water_dataset.pkl")

@@ -11,6 +11,9 @@ class CosChildHyperparameters(CGANHyperparameters):
 
     cos_c_noise = torch.distributions.Exponential(1)
 
+    loc = 0.7035
+    scale = 1 / 0.03
+
     def generate_noise(self, n, device="cuda"):
         return self.cos_c_noise.sample((n, self.noise_size)).to(device=device)
 
@@ -18,6 +21,7 @@ class CosChildHyperparameters(CGANHyperparameters):
 class CosChildGenerator(CGANGenerator):
     def __init__(self, hp: CosChildHyperparameters, mean_x: float, std_x: float, mean_y: float, std_y: float):
         super().__init__(hp, mean_x, std_x, mean_y, std_y)
+        self.__hp = hp
 
     def define_model(self):
         return nn.Sequential(
@@ -30,6 +34,18 @@ class CosChildGenerator(CGANGenerator):
             nn.Linear(256, 1),  # output: (cos_c)
             nn.LogSigmoid()
         )
+
+    def predict(
+            self,
+            p: Particle,
+            distance: float,
+            ene_c: float,
+            cos_p: float
+    ):
+        pred = self.generate_from_particle(p, distance, ene_c, cos_p)[0, 0] - self.__hp.loc
+        pred = abs(pred) * self.__hp.scale
+        pred = 1 - pred
+        return np.clip(pred, -1, 1)
 
     @staticmethod
     def load(model_path: str, data_stats_path: str) -> CGANGenerator:
