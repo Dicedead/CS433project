@@ -46,12 +46,9 @@ class Particle:
         self.pos += distance * self.dir
 
     def Rotate(self, cos_angle: float):
-        s = cos_angle * random.random()  # approximate version
-        self.dir[1] += s
-        self.dir[2] += (cos_angle - s)
-        self.dir /= np.linalg.norm(self.dir)
+        self.dir = self.__gen_dir(cos_angle)
 
-    def create_child(self, dist_p: float, en_p: float, cos_c: float):
+    def __gen_dir(self, cos_angle):
         uniform_val = np.random.uniform(-1, 1)
         bound = np.sqrt(1 - uniform_val ** 2)
         remaining_val = np.random.uniform(-bound, bound)
@@ -66,17 +63,20 @@ class Particle:
                 remaining_coord = coords_without_special[0]
                 break
 
-        special_value = cos_c - self.dir[uniform_coord] * uniform_val - self.dir[remaining_coord] * remaining_val
-        c_dir = [-1, -1, -1]
-        c_dir[uniform_coord] = uniform_val
-        c_dir[remaining_coord] = remaining_val
-        c_dir[special_coord] = special_value
+        special_value = cos_angle - self.dir[uniform_coord] * uniform_val - self.dir[remaining_coord] * remaining_val
+        new_dir = [-1, -1, -1]
+        new_dir[uniform_coord] = uniform_val
+        new_dir[remaining_coord] = remaining_val
+        new_dir[special_coord] = special_value
 
-        c_dir = np.array(c_dir)
-        c_dir = c_dir / np.linalg.norm(c_dir)
+        new_dir = np.array(new_dir)
+        new_dir = new_dir / np.linalg.norm(new_dir)
 
+        return new_dir
+
+    def create_child(self, dist_p: float, en_p: float, cos_c: float):
+        c_dir = self.__gen_dir(cos_c)
         new_pos = self.pos + dist_p * self.dir
-
         return Particle(
             new_pos[0], new_pos[1], new_pos[2],
             c_dir[0], c_dir[1], c_dir[2],

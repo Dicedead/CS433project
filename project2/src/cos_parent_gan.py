@@ -13,9 +13,9 @@ class CosParentHyperparameters(CGANHyperparameters):
 
     cos_p_noise = torch.distributions.Kumaraswamy(0.5, 0.5)
 
-    ratio = 0.01657
-    cut = 0.54343
-    max_iter = 10
+    ratio = 0.021
+    cut = 0.455
+    max_iter = 1
     eps = 1e-6
 
     def generate_noise(self, n, device="cuda"):
@@ -46,22 +46,21 @@ class CosParentGenerator(CGANGenerator):
             ene_c: float,
             device="cpu"
     ):
-        it = pred = 0
+        it = 0
         while it < self.__hp.max_iter:
             pred = self.generate_from_particle(p, distance, ene_c, device=device)[0, 0]
             it += 1
             if self.__hp.cut - self.__hp.ratio <= pred <= self.__hp.cut + self.__hp.ratio:
-                break
+                if pred > self.__hp.cut + self.__hp.ratio:
+                    pred = self.__hp.cut + self.__hp.eps
+                if pred < self.__hp.cut - self.__hp.ratio:
+                    pred = self.__hp.cut - self.__hp.eps
 
-        if pred > self.__hp.cut + self.__hp.ratio:
-            pred = self.__hp.cut + self.__hp.eps
-        if pred < self.__hp.cut - self.__hp.ratio:
-            pred = self.__hp.cut - self.__hp.eps
-
-        pred = pred - self.__hp.cut
-        pred = pred * (1 / self.__hp.ratio)
-        pred = -pred + np.sign(pred)
-        return pred
+                pred = pred - self.__hp.cut
+                pred = pred * (1 / self.__hp.ratio)
+                pred = -pred + np.sign(pred)
+                return np.clip(-pred, -1, 1)
+        return 1.0
 
     @staticmethod
     def load(model_path: str, data_stats_path: str) -> CGANGenerator:
