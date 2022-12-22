@@ -4,6 +4,12 @@
 ## Reproducibility
 Get the data from the [drive](https://drive.google.com/drive/u/1/folders/1Zsz5ZGmZoPcBf4f30cwVOi3FtWQaU5GS?sort=13&direction=a). The easiest is to download the pickled ```water_dataset.pkl``` and to place it in ```project2/pickled_data```. Then, run ```test.py``` located in ```project2/src```. For quick results, we recommend setting the number of particles ```NMC``` to 100,000 or less.
 
+## Additional libraries used
+Beyond libraries used in the course, the following libraries were used:
+* [pandas](https://pandas.pydata.org/) for data management and analysis.
+* [sklearn](https://scikit-learn.org/stable/index.html) for logistic regression.
+* [zipfile](https://docs.python.org/3/library/zipfile.html) for zipped data parsing.
+
 ## Folder organization
 
 ### project2/src
