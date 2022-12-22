@@ -12,7 +12,9 @@ def material_dataset_txt_to_json(
         output_folder=None,
         verbose=True
 ):
-
+    """
+    Convert all zip files in a folder to json files
+    """
     if input_folder is None:
         input_folder = "../data/data_" + material + "/"
 
@@ -50,6 +52,9 @@ def material_dataset_jsontodf(
         two_returns=False,
         verbose=False
 ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Convert all json files in a folder to a dataframe
+    """
     if json_folder is None:
         json_folder = "../json_data/json_" + material + "/"
 
